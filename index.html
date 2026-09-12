@@ -1,409 +1,336 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>My Portfolio</title>
-    <link rel="stylesheet" href="style.css" />
-    <link rel="stylesheet" href="mediaqueries.css" />
-  </head>
-  <body>
-    <nav id="desktop-nav">
-      <div class="logo">Karthik Saligram</div>
-      <div>
-        <ul class="nav-links">
-          <li><a href="#about">About</a></li>
-          <li><a href="#experience">Experience</a></li>
-          <li><a href="#projects">Projects</a></li>
-          <li><a href="#contact">Contact</a></li>
-        </ul>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Karthik Saligram — Software Developer focused on backend systems, cloud infrastructure, Linux tooling, and practical developer products." />
+  <meta name="theme-color" content="#07090d" />
+  <title>Karthik Saligram — Software Developer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="mediaqueries.css" />
+</head>
+<body>
+  <canvas class="ambient-canvas" id="ambient-canvas" aria-hidden="true"></canvas>
+  <div class="page-grid" aria-hidden="true"></div>
+  <div class="ambient-orb ambient-orb-a" aria-hidden="true"></div>
+  <div class="ambient-orb ambient-orb-b" aria-hidden="true"></div>
+  <div class="cursor-glow" aria-hidden="true"></div>
+  <div class="scroll-progress" aria-hidden="true"><span id="scroll-progress-bar"></span></div>
+
+  <header class="site-header" id="top">
+    <nav class="nav shell" aria-label="Primary navigation">
+      <a class="brand" href="#top" aria-label="Karthik Saligram home">
+        <span class="brand-mark">KS</span>
+        <span class="brand-copy"><strong>Karthik Saligram</strong><small>Software Developer</small></span>
+      </a>
+
+      <div class="nav-center" id="nav-links">
+        <a href="#projects">Projects</a>
+        <a href="#experience">Experience</a>
+        <a href="#stack">Stack</a>
+        <a href="#about">About</a>
+      </div>
+
+      <div class="nav-actions">
+        <button class="key-button palette-trigger" type="button" aria-label="Open command palette"><span>⌘</span>K</button>
+        <a class="nav-cta" href="#contact">Contact <span>↗</span></a>
+        <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="nav-links" aria-label="Toggle navigation"><span></span><span></span></button>
       </div>
     </nav>
-    <nav id="hamburger-nav">
-      <div class="logo">John Doe</div>
-      <div class="hamburger-menu">
-        <div class="hamburger-icon" onclick="toggleMenu()">
-          <span></span>
-          <span></span>
-          <span></span>
+  </header>
+
+  <main>
+    <section class="hero shell" aria-labelledby="hero-title">
+      <div class="hero-copy reveal">
+        <div class="availability"><span class="pulse"></span> Open to software engineering roles in Canada</div>
+        <p class="hero-kicker mono">BACKEND / CLOUD / LINUX / FULL-STACK</p>
+        <h1 id="hero-title">I build software that <span class="gradient-text">figures things out.</span></h1>
+        <p class="hero-lede">Software developer working across backend systems, cloud infrastructure, Linux, and practical developer tooling. I like products that reduce friction instead of creating more of it.</p>
+
+        <div class="hero-actions">
+          <a class="button button-primary" href="#projects">Explore projects <span>↓</span></a>
+          <a class="button button-ghost" href="./assets/Karthik_Resume_New.pdf" target="_blank" rel="noreferrer">View résumé <span>↗</span></a>
         </div>
-        <div class="menu-links">
-          <li><a href="#about" onclick="toggleMenu()">About</a></li>
-          <li><a href="#experience" onclick="toggleMenu()">Experience</a></li>
-          <li><a href="#projects" onclick="toggleMenu()">Projects</a></li>
-          <li><a href="#contact" onclick="toggleMenu()">Contact</a></li>
+
+        <div class="hero-meta mono">
+          <span>2+ yrs experience</span><i></i><span>Canada</span><i></i><span>Linux daily driver</span>
         </div>
       </div>
-    </nav>
-    <section id="profile">
-      <div class="section__pic-container">
-        <img src="./assets/image-circular.png" alt="Karthik profile picture" />
-      </div>
-      <div class="section__text">
-        <p class="section__text__p1">Hello, I'm</p>
-        <h1 class="title">Karthik Saligram</h1>
-        <p class="section__text__p2">FullStack & Cloud Developer</p>
-        <div class="btn-container">
-          <button
-            class="btn btn-color-2"
-            onclick="window.open('./assets/Karthik_Resume_New.pdf')"
-          >
-            Download CV
-          </button>
-          <button class="btn btn-color-1" onclick="location.href='./#contact'">
-            Contact Info
-          </button>
+
+      <div class="hero-terminal-wrap reveal">
+        <div class="terminal-window hero-terminal" id="hero-terminal">
+          <div class="terminal-header">
+            <span class="terminal-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span>karthik@portfolio:~</span>
+            <span class="terminal-badge">interactive</span>
+          </div>
+          <div class="terminal-body" id="terminal-output" aria-live="polite">
+            <div><span class="term-muted">Last login:</span> <span id="terminal-date">today</span></div>
+            <div class="terminal-gap"></div>
+            <div><span class="term-prompt">karthik@portfolio</span>:<span class="term-path">~</span>$ whoami</div>
+            <div class="term-output">Karthik Saligram — Software Developer</div>
+            <div class="term-output muted-line">Backend · Cloud · Linux · Developer Tools</div>
+            <div class="terminal-gap"></div>
+            <div class="term-output">Type <strong>help</strong> or try <strong>projects</strong>, <strong>skills</strong>, <strong>whatbroke</strong>.</div>
+          </div>
+          <form class="terminal-input-row" id="terminal-form" autocomplete="off">
+            <label for="terminal-input" class="sr-only">Portfolio terminal command</label>
+            <span class="term-prompt">karthik@portfolio</span>:<span class="term-path">~</span>$
+            <input id="terminal-input" name="command" spellcheck="false" autocomplete="off" aria-label="Type a portfolio command" />
+            <span class="terminal-cursor" aria-hidden="true"></span>
+          </form>
+          <div class="terminal-shortcuts">
+            <button type="button" data-terminal-command="projects">projects</button>
+            <button type="button" data-terminal-command="whatbroke">whatbroke</button>
+            <button type="button" data-terminal-command="skills">skills</button>
+            <button type="button" data-terminal-command="contact">contact</button>
+          </div>
         </div>
-        <div id="socials-container">
-          <img
-            src="./assets/linkedin.png"
-            alt="My LinkedIn profile"
-            class="icon"
-            onclick="window.open('https://www.linkedin.com/in/karthik-saligram-17968518b/')"
-          />
-          <img
-            src="./assets/github.png"
-            alt="My Github profile"
-            class="icon"
-            onclick="window.open('https://github.com/karthik-07')"
-          />
+      </div>
+
+      <div class="hero-bottom reveal">
+        <div class="hero-socials">
+          <a href="https://github.com/karthik-07" target="_blank" rel="noreferrer">GitHub <span>↗</span></a>
+          <a href="https://www.linkedin.com/in/karthik-saligram-17968518b/" target="_blank" rel="noreferrer">LinkedIn <span>↗</span></a>
+          <a href="mailto:karthikvs216@gmail.com">Email <span>↗</span></a>
+        </div>
+        <button class="scroll-cue" type="button" data-scroll="#projects"><span>scroll</span><i></i></button>
+      </div>
+    </section>
+
+    <section class="section shell" id="projects">
+      <div class="section-head reveal">
+        <div><span class="eyebrow mono">01 / PROJECTS</span><h2>Not just cards. <span class="muted-heading">Try them.</span></h2></div>
+        <p>Public, personal work only. Each project below exposes a small piece of the underlying idea instead of just describing it.</p>
+      </div>
+
+      <article class="flagship reveal" data-project data-tags="linux python systems backend">
+        <div class="flagship-copy">
+          <div class="project-label-row"><span class="status-pill"><i></i> ACTIVE BUILD</span><span class="mono project-tech">PYTHON · ARCH LINUX · SYSTEMD · PACMAN</span></div>
+          <h3>What Broke?</h3>
+          <p class="project-lede">Linux system-change forensics for the moment when everything worked yesterday.</p>
+          <p>Instead of dumping logs, the CLI compares errors across boots, identifies newly observed failure signatures, and shows package changes that happened before the failure appeared.</p>
+          <div class="project-proof">
+            <div><strong>Cross-boot</strong><span>Error signatures</span></div>
+            <div><strong>Local-only</strong><span>No daemon / cloud</span></div>
+            <div><strong>Explainable</strong><span>Evidence ≠ causation</span></div>
+          </div>
+          <div class="project-actions">
+            <a class="button button-small button-ghost" href="https://github.com/karthik-07" target="_blank" rel="noreferrer">GitHub ↗</a>
+            <button class="button button-small button-subtle" type="button" data-terminal-command="whatbroke">Open in terminal</button>
+          </div>
+        </div>
+
+        <div class="wb-console" id="whatbroke-demo">
+          <div class="wb-topbar">
+            <div><span class="status-dot"></span><span class="mono">whatbroke analyze</span></div>
+            <div class="scenario-tabs" role="tablist" aria-label="What Broke scenarios">
+              <button class="scenario-tab active" type="button" role="tab" aria-selected="true" data-scenario="wifi">Wi‑Fi</button>
+              <button class="scenario-tab" type="button" role="tab" aria-selected="false" data-scenario="service">Service</button>
+              <button class="scenario-tab" type="button" role="tab" aria-selected="false" data-scenario="package">Library</button>
+            </div>
+          </div>
+
+          <div class="wb-stage" id="wb-stage">
+            <div class="wb-timeline" aria-label="System change timeline">
+              <div class="wb-node change"><span class="node-time" id="wb-time-change">09:14</span><i></i><span><small>CHANGE</small><strong id="wb-change">linux-firmware upgraded</strong></span></div>
+              <div class="wb-line"></div>
+              <div class="wb-node reboot"><span class="node-time" id="wb-time-reboot">09:22</span><i></i><span><small>REBOOT</small><strong>system restarted</strong></span></div>
+              <div class="wb-line danger"></div>
+              <div class="wb-node failure"><span class="node-time" id="wb-time-failure">09:27</span><i></i><span><small>NEW FAILURE</small><strong id="wb-failure">mt7921e timeout</strong></span></div>
+            </div>
+
+            <div class="wb-terminal">
+              <div class="mini-terminal-head"><span>$ whatbroke compare --previous <strong id="wb-prev-count">15</strong></span><span id="wb-run-state">ready</span></div>
+              <pre id="wb-output"><span class="term-label">NEWLY OBSERVED ERROR</span>
+<span class="term-strong">mt7921e: Timeout for driver own</span>
+
+current boot      <span class="term-good">17 occurrences</span>
+previous boots    <span class="term-good">0 occurrences</span>
+
+<span class="term-label">PRECEDING CHANGES</span>
+linux-firmware    upgraded
+linux             upgraded
+NetworkManager    upgraded
+
+<span class="term-note">Evidence shown. Cause not assumed.</span></pre>
+            </div>
+          </div>
+
+          <div class="wb-footer">
+            <div><span class="mono">SIGNAL</span><strong id="wb-signal">New in visible history</strong></div>
+            <button class="run-analysis" id="run-analysis" type="button"><span>▶</span> Run analysis</button>
+          </div>
+        </div>
+      </article>
+
+      <div class="project-lab-grid">
+        <article class="lab-card reveal" data-project data-tags="python audio signal-processing">
+          <div class="lab-head"><span class="project-index">02</span><span class="mono muted">SIGNAL PROCESSING</span></div>
+          <h3>Pronunciation Alignment Engine</h3>
+          <p>Reference-vs-user audio alignment using MFCC features and Dynamic Time Warping. Built to reason about timing differences without pretending speech is perfectly uniform.</p>
+          <div class="alignment-demo" id="alignment-demo" aria-label="Pronunciation alignment demo">
+            <div class="wave-row"><span>REF</span><div class="wave wave-reference" aria-hidden="true"></div></div>
+            <div class="wave-row"><span>USR</span><div class="wave wave-user" aria-hidden="true"></div></div>
+            <div class="alignment-track"><span id="alignment-fill"></span></div>
+            <div class="alignment-meta"><span id="alignment-status">Ready to compare</span><strong id="alignment-score">—</strong></div>
+            <button class="lab-action" id="run-alignment" type="button">Run alignment</button>
+          </div>
+          <div class="tag-row"><span>Python</span><span>MFCC</span><span>DTW</span><span>Audio</span></div>
+        </article>
+
+        <article class="lab-card reveal" data-project data-tags="python sql backend data">
+          <div class="lab-head"><span class="project-index">03</span><span class="mono muted">NATURAL LANGUAGE → SQL</span></div>
+          <h3>NL → SQL Translation Layer</h3>
+          <p>A backend-focused translation layer that maps natural-language questions to schema-aware SQL. The mini console below is an illustrative frontend demo of the flow.</p>
+          <div class="sql-demo">
+            <div class="sql-query-row"><span class="mono">ASK</span><input id="sql-question" value="Show patients admitted this month" aria-label="Example natural language database question" /></div>
+            <div class="sql-suggestions">
+              <button type="button" data-sql-example="Show patients admitted this month">Admissions</button>
+              <button type="button" data-sql-example="Count appointments by department">Departments</button>
+              <button type="button" data-sql-example="Show the 5 most recent lab results">Lab results</button>
+            </div>
+            <pre class="sql-output" id="sql-output"><code><span class="sql-keyword">SELECT</span> patient_id, admitted_at
+<span class="sql-keyword">FROM</span> admissions
+<span class="sql-keyword">WHERE</span> admitted_at &gt;= DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1);</code></pre>
+            <button class="lab-action" id="translate-sql" type="button">Translate example</button>
+          </div>
+          <div class="tag-row"><span>Python</span><span>SQL Server</span><span>REST</span><span>Schema-aware</span></div>
+        </article>
+
+        <article class="lab-card movie-lab reveal" data-project data-tags="javascript frontend api">
+          <div class="lab-head"><span class="project-index">04</span><span class="mono muted">FRONTEND · API</span></div>
+          <h3>Movie Database Dashboard</h3>
+          <p>An older frontend project: searchable movie discovery with a responsive, card-based interface backed by movie data APIs.</p>
+          <div class="movie-demo">
+            <div class="movie-search"><span>⌕</span><input id="movie-search" placeholder="Search demo titles..." aria-label="Search sample movie titles" /></div>
+            <div class="movie-grid" id="movie-grid">
+              <button class="movie-poster" type="button" data-title="Interstellar"><span class="poster-art p1"></span><strong>Interstellar</strong><small>Sci‑Fi</small></button>
+              <button class="movie-poster" type="button" data-title="The Dark Knight"><span class="poster-art p2"></span><strong>The Dark Knight</strong><small>Action</small></button>
+              <button class="movie-poster" type="button" data-title="Arrival"><span class="poster-art p3"></span><strong>Arrival</strong><small>Sci‑Fi</small></button>
+            </div>
+          </div>
+          <div class="project-actions">
+            <a class="text-link" href="https://github.com/karthik-07/movie-database" target="_blank" rel="noreferrer">GitHub ↗</a>
+            <a class="text-link" href="https://karthik-07.github.io/movie-database/" target="_blank" rel="noreferrer">Live demo ↗</a>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section shell" id="experience">
+      <div class="section-head reveal">
+        <div><span class="eyebrow mono">02 / EXPERIENCE</span><h2>Engineering work. <span class="muted-heading">Private systems stay private.</span></h2></div>
+        <p>High-level responsibilities only. No proprietary architecture, algorithms, client code, or internal screenshots.</p>
+      </div>
+
+      <div class="experience-shell reveal">
+        <div class="timeline-nav" role="tablist" aria-label="Experience timeline">
+          <button class="timeline-tab active" type="button" data-exp="current" role="tab" aria-selected="true"><span>2025—Now</span><strong>Software Developer</strong><small>Product & systems</small></button>
+          <button class="timeline-tab" type="button" data-exp="previous" role="tab" aria-selected="false"><span>2025—2026</span><strong>Software Developer</strong><small>Full-stack & cloud</small></button>
+          <button class="timeline-tab" type="button" data-exp="education" role="tab" aria-selected="false"><span>2023—2024</span><strong>Cloud Computing</strong><small>George Brown College</small></button>
+        </div>
+        <div class="experience-panel" id="experience-panel" aria-live="polite">
+          <span class="mono muted" id="exp-period">2025 — PRESENT</span>
+          <h3 id="exp-title">Software Developer</h3>
+          <p id="exp-summary">Building production software across backend services, web interfaces, deployment workflows, and containerized infrastructure while keeping internal product details private.</p>
+          <div class="experience-highlights" id="exp-highlights">
+            <span>Backend APIs</span><span>Production services</span><span>Container workflows</span><span>Frontend delivery</span>
+          </div>
+          <div class="tag-row" id="exp-tags"><span>Python</span><span>React / Next.js</span><span>Docker</span><span>MongoDB</span><span>Redis</span><span>Nginx</span></div>
         </div>
       </div>
     </section>
-    <section id="about">
-      <p class="section__text__p1">Get To Know More</p>
-      <h1 class="title">About Me</h1>
-      <div class="section-container">
-        <div class="section__pic-container">
-          <img
-            src="./assets/karthik.jpg"
-            alt="Profile picture"
-            class="about-pic"
-          />
-        </div>
-        <div class="about-details-container">
-          <div class="about-containers">
-            <div class="details-container">
-              <img
-                src="./assets/experience.png"
-                alt="Experience icon"
-                class="icon"
-              />
-              <h3>Experience</h3>
-              <p>Full Stack Development & Cloud Developer</p>
-            </div>
-            <div class="details-container">
-              <img
-                src="./assets/education.png"
-                alt="Education icon"
-                class="icon"
-              />
-              <h3>Education</h3>
-              <p>Bachelors Degree in Computer Science<br />Post Graduate Cert</p>
-            </div>
-          </div>
-          <div class="text-container">
-            <p>
-              As a DevOps Engineer with a strong focus on AWS, I specialize in deploying and managing scalable applications in cloud environments. I have experience with running containerized applications in Kubernetes, creating CI/CD build pipelines and setting up monitoring and reporting tools. With a commitment to optimizing workflows and leveraging cloud technologies, I aim to drive operational excellence and deliver robust solutions.
-            </p>
-          </div>
-        </div>
+
+    <section class="section shell" id="stack">
+      <div class="section-head reveal">
+        <div><span class="eyebrow mono">03 / STACK</span><h2>Click a domain. <span class="muted-heading">See what I actually use.</span></h2></div>
+        <p>No fake percentage bars. The stack is grouped by the kind of problem each tool helps me solve.</p>
       </div>
-      <img
-        src="./assets/arrow.png"
-        alt="Arrow icon"
-        class="icon arrow"
-        onclick="location.href='./#experience'"
-      />
-    </section>
-    <section id="experience">
-      <p class="section__text__p1">Explore My</p>
-      <h1 class="title">Experience</h1>
-      <div class="experience-details-container">
-        <div class="about-containers">
-          <div class="details-container">
-            <h2 class="experience-sub-title">Skills</h2>
-            <div class="article-container">
-              <article>
-                <img
-                  src="./assets/checkmark.png"
-                  alt="Experience icon"
-                  class="icon"
-                />
-                <div>
-                  <h3>HTML</h3>
-                  <p>Experienced</p>
-                </div>
-              </article>
-              <article>
-                <img
-                  src="./assets/checkmark.png"
-                  alt="Experience icon"
-                  class="icon"
-                />
-                <div>
-                  <h3>CSS</h3>
-                  <p>Experienced</p>
-                </div>
-              </article>
-              <article>
-                <img
-                  src="./assets/checkmark.png"
-                  alt="Experience icon"
-                  class="icon"
-                />
-                <div>
-                  <h3>VueJs</h3>
-                  <p>Intermediate</p>
-                </div>
-              </article>
-              <article>
-                <img
-                  src="./assets/checkmark.png"
-                  alt="Experience icon"
-                  class="icon"
-                />
-                <div>
-                  <h3>JavaScript</h3>
-                  <p>Experienced</p>
-                </div>
-              </article>
-              <article>
-                <img
-                  src="./assets/checkmark.png"
-                  alt="Experience icon"
-                  class="icon"
-                />
-                <div>
-                  <h3>TypeScript</h3>
-                  <p>Experienced</p>
-                </div>
-              </article>
-              <article>
-                <img
-                  src="./assets/checkmark.png"
-                  alt="Experience icon"
-                  class="icon"
-                />
-                <div>
-                  <h3>ReactJs</h3>
-                  <p>Experienced</p>
-                </div>
-              </article>
-              <article>
-                <img
-                  src="./assets/checkmark.png"
-                  alt="Experience icon"
-                  class="icon"
-                />
-                <div>
-                  <h3>Node JS</h3>
-                  <p>Experienced</p>
-                </div>
-              </article>
-            </div>
-          </div>
-          <div class="details-container">
-            <h2 class="experience-sub-title">Skills</h2>
-            <div class="article-container">
-              <article>
-                <img
-                  src="./assets/checkmark.png"
-                  alt="Experience icon"
-                  class="icon"
-                />
-                <div>
-                  <h3>PostgreSQL</h3>
-                  <p>Basic</p>
-                </div>
-              </article>
-              <article>
-                <img
-                  src="./assets/checkmark.png"
-                  alt="Experience icon"
-                  class="icon"
-                />
-                <div>
-                  <h3>Express JS</h3>
-                  <p>Intermediate</p>
-                </div>
-              </article>
-              <article>
-                <img
-                  src="./assets/checkmark.png"
-                  alt="Experience icon"
-                  class="icon"
-                />
-                <div>
-                  <h3>Git</h3>
-                  <p>Intermediate</p>
-                </div>
-              </article>
-              <article>
-                <img
-                  src="./assets/checkmark.png"
-                  alt="Experience icon"
-                  class="icon"
-                />
-                <div>
-                  <h3>Linux</h3>
-                  <p>Experienced</p>
-                </div>
-              </article>
-              <article>
-                <img
-                  src="./assets/checkmark.png"
-                  alt="Experience icon"
-                  class="icon"
-                />
-                <div>
-                  <h3>AWS</h3>
-                  <p>Intermediate</p>
-                </div>
-              </article>
-              <article>
-                <img
-                  src="./assets/checkmark.png"
-                  alt="Experience icon"
-                  class="icon"
-                />
-                <div>
-                  <h3>Terraform</h3>
-                  <p>Intermediate</p>
-                </div>
-              </article>
-              <article>
-                <img
-                  src="./assets/checkmark.png"
-                  alt="Experience icon"
-                  class="icon"
-                />
-                <div>
-                  <h3>Gitlab CI/CD</h3>
-                  <p>Intermediate</p>
-                </div>
-              </article>
-            </div>
+
+      <div class="stack-console reveal">
+        <div class="stack-tabs" role="tablist" aria-label="Technology domains">
+          <button class="stack-tab active" type="button" data-stack="systems" role="tab" aria-selected="true">Systems</button>
+          <button class="stack-tab" type="button" data-stack="backend" role="tab" aria-selected="false">Backend</button>
+          <button class="stack-tab" type="button" data-stack="cloud" role="tab" aria-selected="false">Cloud</button>
+          <button class="stack-tab" type="button" data-stack="frontend" role="tab" aria-selected="false">Frontend</button>
+          <button class="stack-tab" type="button" data-stack="data" role="tab" aria-selected="false">Data</button>
+        </div>
+        <div class="stack-view">
+          <div class="stack-copy"><span class="mono muted" id="stack-label">SYSTEMS</span><h3 id="stack-title">I like knowing what the machine is actually doing.</h3><p id="stack-description">Linux is my daily environment. I work comfortably around systemd, journald, networking, shells, containers, and the boundary between applications and the OS.</p></div>
+          <div class="stack-nodes" id="stack-nodes">
+            <button type="button">Linux</button><button type="button">Arch</button><button type="button">systemd</button><button type="button">journald</button><button type="button">Docker</button><button type="button">Shell</button>
           </div>
         </div>
+        <div class="stack-related"><span class="mono muted">RELATED PROJECTS</span><div id="stack-projects"><button type="button" data-scroll="#projects">What Broke?</button></div></div>
       </div>
-      <img
-        src="./assets/arrow.png"
-        alt="Arrow icon"
-        class="icon arrow"
-        onclick="location.href='./#projects'"
-      />
     </section>
-    <section id="projects">
-      <p class="section__text__p1">Browse My Recent</p>
-      <h1 class="title">Projects</h1>
-      <div class="experience-details-container">
-        <div class="about-containers">
-          <div class="details-container color-container">
-            <div class="article-container">
-              <img
-                src="./assets/movie.jpg"
-                alt="Project 1"
-                class="project-img"
-              />
-            </div>
-            <h2 class="experience-sub-title project-title">Movie Database</h2>
-            <div class="btn-container">
-              <button
-                class="btn btn-color-2 project-btn"
-                onclick="window.open('https://github.com/karthik-07/movie-database')"
-              >
-                Github
-              </button>
-              <button
-                class="btn btn-color-2 project-btn"
-                onclick="location.href='https://karthik-07.github.io/movie-database/'"
-              >
-                Live Demo
-              </button>
-            </div>
-          </div>
-          <div class="details-container color-container">
-            <div class="article-container">
-              <img
-                src="./assets/rotary.png"
-                alt="Project 2"
-                class="project-img"
-              />
-            </div>
-            <h2 class="experience-sub-title project-title">My Rotary</h2>
-            <div class="btn-container">
-              <button
-                class="btn btn-color-2 project-btn"
-                onclick="window.open('https://myrotaryprojects.org')"
-              >
-                Live Demo
-              </button>
-            </div>
-          </div>
-          <div class="details-container color-container">
-            <div class="article-container">
-              <img
-                src="./assets/s3.jpeg"
-                alt="Project 3"
-                class="project-img"
-              />
-            </div>
-            <h2 class="experience-sub-title project-title">AWS-Hosted_Resume</h2>
-            <div class="btn-container">
-              <button
-                class="btn btn-color-2 project-btn"
-                onclick="window.open('https://github.com/karthik-07/AWS-S3-Resume')"
-              >
-                Github Repo
-              </button>
-            </div>
-          </div>
+
+    <section class="section shell" id="about">
+      <div class="about-grid">
+        <div class="about-copy reveal">
+          <span class="eyebrow mono">04 / ABOUT</span>
+          <h2>I care more about the <span class="gradient-text">reasoning layer</span> than the demo layer.</h2>
+          <p>My background spans software development, cloud computing, Linux, and cybersecurity. The projects I enjoy most have an underlying systems problem: comparing histories, translating intent into structured queries, aligning real-world signals, or reducing the amount of manual work a user has to do.</p>
+          <p>I prefer small, explainable systems with clear boundaries over unnecessary complexity.</p>
         </div>
-      </div>
-      <img
-        src="./assets/arrow.png"
-        alt="Arrow icon"
-        class="icon arrow"
-        onclick="location.href='./#contact'"
-      />
-    </section>
-    <section id="contact">
-      <p class="section__text__p1">Get in Touch</p>
-      <h1 class="title">Contact Me</h1>
-      <div class="contact-info-upper-container">
-        <div class="contact-info-container">
-          <img
-            src="./assets/email.png"
-            alt="Email icon"
-            class="icon contact-icon email-icon"
-          />
-          <p><a href="mailto:karthikvs216@gmail.com">karthikvs216@gmail.com</a></p>
-        </div>
-        <div class="contact-info-container">
-          <img
-            src="./assets/linkedin.png"
-            alt="LinkedIn icon"
-            class="icon contact-icon"
-          />
-          <p><a href="https://www.linkedin.com/in/karthik-saligram-17968518b/">LinkedIn</a></p>
+
+        <div class="about-terminal reveal">
+          <div class="code-head"><span>developer.json</span><span class="mono">read-only</span></div>
+          <pre><code>{
+  <span class="json-key">"name"</span>: <span class="json-string">"Karthik Saligram"</span>,
+  <span class="json-key">"focus"</span>: [
+    <span class="json-string">"backend"</span>,
+    <span class="json-string">"cloud"</span>,
+    <span class="json-string">"linux"</span>,
+    <span class="json-string">"developer tools"</span>
+  ],
+  <span class="json-key">"location"</span>: <span class="json-string">"Canada"</span>,
+  <span class="json-key">"education"</span>: <span class="json-string">"Cloud Computing"</span>,
+  <span class="json-key">"currently_building"</span>: <span class="json-string">"What Broke?"</span>,
+  <span class="json-key">"open_to_work"</span>: <span class="json-bool">true</span>
+}</code></pre>
         </div>
       </div>
     </section>
-    <footer>
-      <nav>
-        <div class="nav-links-container">
-          <ul class="nav-links">
-            <li><a href="#about">About</a></li>
-            <li><a href="#experience">Experience</a></li>
-            <li><a href="#projects">Projects</a></li>
-            <li><a href="#contact">Contact</a></li>
-          </ul>
+
+    <section class="contact-section" id="contact">
+      <div class="shell contact-panel reveal">
+        <div class="contact-copy"><span class="eyebrow mono">05 / CONTACT</span><h2>Have a problem worth figuring out?</h2><p>I’m open to software engineering roles and conversations around backend systems, Linux, cloud infrastructure, and developer tooling.</p></div>
+        <div class="contact-actions">
+          <a class="button button-primary" href="mailto:karthikvs216@gmail.com">Email me <span>↗</span></a>
+          <button class="button button-ghost copy-email" type="button" data-email="karthikvs216@gmail.com">Copy email</button>
+          <a class="button button-ghost" href="https://github.com/karthik-07" target="_blank" rel="noreferrer">GitHub <span>↗</span></a>
         </div>
-      </nav>
-      <p>Copyright &#169; 2023 Karthik Saligram. All Rights Reserved.</p>
-    </footer>
-    <script src="script.js"></script>
-  </body>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer shell">
+    <div class="footer-left"><span class="brand-mark">KS</span><div><strong>Karthik Saligram</strong><small>Built with HTML, CSS & vanilla JavaScript.</small></div></div>
+    <div class="footer-links"><a href="https://github.com/karthik-07" target="_blank" rel="noreferrer">GitHub</a><a href="https://www.linkedin.com/in/karthik-saligram-17968518b/" target="_blank" rel="noreferrer">LinkedIn</a><a href="#top">Top ↑</a></div>
+    <span class="mono muted">© <span id="year"></span></span>
+  </footer>
+
+  <div class="command-palette" id="command-palette" aria-hidden="true">
+    <button class="palette-backdrop" type="button" aria-label="Close command palette"></button>
+    <div class="palette-dialog" role="dialog" aria-modal="true" aria-labelledby="palette-title">
+      <div class="palette-search-row">
+        <span>⌕</span>
+        <label class="sr-only" for="palette-search" id="palette-title">Search portfolio commands</label>
+        <input id="palette-search" placeholder="Search portfolio..." autocomplete="off" />
+        <kbd>esc</kbd>
+      </div>
+      <div class="palette-results" id="palette-results"></div>
+      <div class="palette-footer"><span><kbd>↑</kbd><kbd>↓</kbd> navigate</span><span><kbd>↵</kbd> open</span><span>Ctrl/Cmd + K</span></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="script.js"></script>
+</body>
 </html>
