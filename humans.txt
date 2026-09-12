@@ -1,0 +1,13 @@
+/* HUMAN */
+Name: Karthik Saligram
+Role: Software Developer
+Location: Canada
+GitHub: https://github.com/karthik-07
+LinkedIn: https://www.linkedin.com/in/karthik-saligram-17968518b/
+
+/* SITE */
+Built with: HTML, CSS, vanilla JavaScript
+Reason: I wanted the portfolio to behave like software, not a slide deck.
+Framework: none
+Easter egg: yes
+Hint: no

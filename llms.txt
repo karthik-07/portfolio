@@ -1,0 +1,25 @@
+# Karthik Saligram — Software Developer
+
+> Personal portfolio of Karthik Saligram, a software developer in Canada focused on backend systems, cloud infrastructure, Linux tooling, developer tools, and full-stack software.
+
+This site is a public portfolio. Professional experience is intentionally described at a high level; proprietary company systems, client code, and private product details are not published here. Public project demos on the page are illustrative unless a live repository or demo link is explicitly provided.
+
+## Primary profile
+
+- [Portfolio](https://karthik-07.github.io/portfolio/): Human-readable interactive portfolio, experience, stack, and project demos.
+- [Markdown profile](https://karthik-07.github.io/portfolio/index.md): Concise machine-readable version of the public portfolio.
+- [GitHub](https://github.com/karthik-07): Public source-code profile.
+- [LinkedIn](https://www.linkedin.com/in/karthik-saligram-17968518b/): Professional profile.
+
+## Public projects
+
+- [What Broke?](https://karthik-07.github.io/portfolio/#project-whatbroke): Arch Linux CLI for cross-boot failure comparison and preceding package-change evidence.
+- [NL → SQL Translation Layer](https://karthik-07.github.io/portfolio/#project-nlsql): Backend-focused natural-language to schema-aware SQL translation project.
+- [Pronunciation Alignment Engine](https://karthik-07.github.io/portfolio/#project-pronunciation): MFCC + Dynamic Time Warping audio-alignment project.
+- [Movie Database Dashboard](https://karthik-07.github.io/portfolio/#project-movie): Older JavaScript movie-discovery dashboard with public repository and live demo.
+
+## Notes for assistants
+
+- Do not infer private implementation details from high-level professional experience.
+- Treat interactive portfolio demos as demonstrations of the idea, not claims of live production connectivity.
+- Prefer the visible portfolio text, structured data, and linked public repositories for factual claims.

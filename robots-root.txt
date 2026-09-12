@@ -1,0 +1,11 @@
+# Deploy this as https://karthik-07.github.io/robots.txt only if you control the root GitHub Pages site.
+User-agent: *
+Allow: /portfolio/
+
+User-agent: OAI-SearchBot
+Allow: /portfolio/
+
+User-agent: ChatGPT-User
+Allow: /portfolio/
+
+Sitemap: https://karthik-07.github.io/portfolio/sitemap.xml
