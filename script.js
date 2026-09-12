@@ -325,7 +325,7 @@ const terminalCommands = {
     return ['<span class="term-output">Opening LinkedIn ↗</span>'];
   },
   resume: () => {
-    window.open('./assets/Karthik_Resume_New.pdf', '_blank', 'noopener,noreferrer');
+    window.open('./assets/Karthik-Resume.pdf', '_blank', 'noopener,noreferrer');
     return ['<span class="term-output">Opening résumé ↗</span>'];
   },
   pwd: () => ['<span class="term-output">/home/karthik/portfolio</span>'],
@@ -442,7 +442,7 @@ const paletteActions = [
   { icon: '03', label: 'Inspect stack', description: 'Systems, backend, cloud, frontend, data', hint: 'skills', action: () => scrollToTarget('#stack') },
   { icon: 'GH', label: 'Open GitHub', description: 'github.com/karthik-07', hint: '↗', action: () => window.open('https://github.com/karthik-07', '_blank', 'noopener,noreferrer') },
   { icon: 'LI', label: 'Open LinkedIn', description: 'Professional profile', hint: '↗', action: () => window.open('https://www.linkedin.com/in/karthik-saligram-17968518b/', '_blank', 'noopener,noreferrer') },
-  { icon: 'CV', label: 'View résumé', description: 'Open current résumé PDF', hint: '↗', action: () => window.open('./assets/Karthik_Resume_New.pdf', '_blank', 'noopener,noreferrer') },
+  { icon: 'CV', label: 'View résumé', description: 'Open current résumé PDF', hint: '↗', action: () => window.open('./assets/Karthik-Resume.pdf', '_blank', 'noopener,noreferrer') },
   { icon: '@', label: 'Contact Karthik', description: 'karthikvs216@gmail.com', hint: 'email', action: () => { window.location.href = 'mailto:karthikvs216@gmail.com'; } }
 ];
 
@@ -1082,7 +1082,7 @@ if (ambientCanvas && !reduceMotion) {
     let ripples = [];
     let driftStars = [];
     let shootingStars = [];
-    let nextShootingStarAt = performance.now() + 1800 + Math.random() * 1200;
+    let nextShootingStarAt = performance.now() + 4200;
     let canvasWidth = 0;
     let canvasHeight = 0;
     let canvasDpr = 1;
@@ -1144,23 +1144,21 @@ if (ambientCanvas && !reduceMotion) {
     }
 
     function makeDriftStar() {
-      const speed = 0.04 + Math.random() * 0.14;
-      const angle = -0.26 + Math.random() * 0.52;
+      const speed = 0.035 + Math.random() * 0.11;
+      const angle = -0.22 + Math.random() * 0.44;
       return {
         x: Math.random() * Math.max(1, canvasWidth),
         y: Math.random() * Math.max(1, canvasHeight),
         vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed + (Math.random() - 0.5) * 0.045,
-        size: 0.7 + Math.random() * 1.65,
+        vy: Math.sin(angle) * speed + (Math.random() - 0.5) * 0.035,
+        size: 0.65 + Math.random() * 1.25,
         phase: Math.random() * Math.PI * 2,
         cyan: Math.random() > 0.5
       };
     }
 
     function resetDriftStars() {
-      const count = canvasWidth < 760
-        ? 15
-        : (lowPowerDevice || saveData ? 18 : 36);
+      const count = canvasWidth < 760 ? 8 : (lowPowerDevice || saveData ? 10 : 18);
       driftStars = Array.from({ length: count }, makeDriftStar);
     }
 
@@ -1178,32 +1176,8 @@ if (ambientCanvas && !reduceMotion) {
         maxLife: 95 + Math.random() * 45,
         length: 50 + Math.random() * 55
       });
-      if (shootingStars.length > 4) shootingStars.shift();
-
-      if (Math.random() < 0.22 && shootingStars.length < 4) {
-        const burstDelay = 180 + Math.random() * 420;
-        window.setTimeout(() => {
-          if (!document.hidden && !reduceMotion && !saveData && !lowPowerDevice && canvasWidth >= 720) {
-            const burstFromTop = Math.random() > 0.45;
-            const burstSpeed = 4.6 + Math.random() * 3.0;
-            const burstAngle = 0.40 + Math.random() * 0.28;
-
-            shootingStars.push({
-              x: burstFromTop ? Math.random() * canvasWidth * 0.78 : -40,
-              y: burstFromTop ? -30 : Math.random() * canvasHeight * 0.5,
-              vx: Math.cos(burstAngle) * burstSpeed,
-              vy: Math.sin(burstAngle) * burstSpeed,
-              life: 0,
-              maxLife: 90 + Math.random() * 50,
-              length: 48 + Math.random() * 65
-            });
-
-            if (shootingStars.length > 4) shootingStars.shift();
-          }
-        }, burstDelay);
-      }
-
-      nextShootingStarAt = now + 2500 + Math.random() * 2500;
+      if (shootingStars.length > 2) shootingStars.shift();
+      nextShootingStarAt = now + 6200 + Math.random() * 6500;
     }
 
     function drawMovingStars(now) {
@@ -1215,7 +1189,7 @@ if (ambientCanvas && !reduceMotion) {
         if (star.y > canvasHeight + 20) star.y = -20;
         if (star.y < -20) star.y = canvasHeight + 20;
 
-        const twinkle = 0.42 + (Math.sin(now / 560 + star.phase + index * 0.31) + 1) * 0.27;
+        const twinkle = 0.35 + (Math.sin(now / 620 + star.phase + index * 0.31) + 1) * 0.24;
         const pointerBoost = pointer.active ? Math.max(0, 1 - Math.hypot(pointer.x - star.x, pointer.y - star.y) / 180) : 0;
         const alpha = Math.min(0.95, twinkle + pointerBoost * 0.38);
         const radius = star.size + pointerBoost * 0.75;
