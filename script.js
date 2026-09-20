@@ -1,14 +1,109 @@
 const $ = (selector, scope = document) => scope.querySelector(selector);
 const $$ = (selector, scope = document) => [...scope.querySelectorAll(selector)];
+const rootElement = document.documentElement;
 
 const header = $('.site-header');
 const menuToggle = $('.menu-toggle');
 const navLinks = $('#nav-links');
-const navAnchors = $$('.nav-center a[href^="#"]');
 const toast = $('#toast');
 
+// =========================================================
+// Motion tiers (static / constrained / full)
+// =========================================================
 const reduceMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+const coarsePointerQuery = window.matchMedia('(pointer: coarse)');
+const noHoverQuery = window.matchMedia('(hover: none)');
+const lightPreferenceQuery = window.matchMedia('(prefers-color-scheme: light)');
 
+const Motion = {
+  tier: 'static',
+  reduced: reduceMotionQuery.matches,
+  pointer: { x: -9999, y: -9999, mx: 0, my: 0, active: false, dirty: false }
+};
+
+function resolveMotionTier() {
+  if (reduceMotionQuery.matches) return 'static';
+  const coarse = coarsePointerQuery.matches || noHoverQuery.matches;
+  const narrow = window.innerWidth < 900;
+  const saveData = Boolean(navigator.connection?.saveData);
+  const memory = typeof navigator.deviceMemory === 'number' ? navigator.deviceMemory : 8;
+  const cores = typeof navigator.hardwareConcurrency === 'number' ? navigator.hardwareConcurrency : 8;
+  const low = memory <= 4 || cores <= 4;
+  return (coarse || narrow || saveData || low) ? 'constrained' : 'full';
+}
+
+function refreshMotionTier() {
+  const next = resolveMotionTier();
+  const changed = next !== Motion.tier;
+  Motion.tier = next;
+  Motion.reduced = reduceMotionQuery.matches;
+  rootElement.setAttribute('data-motion', next);
+  if (changed) document.dispatchEvent(new CustomEvent('motion:tierchange', { detail: next }));
+  return changed;
+}
+refreshMotionTier();
+
+// =========================================================
+// Motion engine (GSAP enhancement — never the content layer)
+// =========================================================
+function hasMotionEngine() {
+  return Boolean(window.gsap && window.ScrollTrigger);
+}
+
+let gsapMedia = null;
+
+function registerMotionEngine() {
+  if (!hasMotionEngine()) return false;
+  window.gsap.registerPlugin(window.ScrollTrigger);
+  rootElement.setAttribute('data-engine', 'gsap');
+  return true;
+}
+
+function initGsapReveals() {
+  if (!registerMotionEngine()) return false;
+  const gsap = window.gsap;
+  gsap.set(revealItems, { autoAlpha: 0, y: 18 });
+  window.ScrollTrigger.batch(revealItems, {
+    start: 'top 88%',
+    once: true,
+    onEnter: (batch) => gsap.to(batch, {
+      autoAlpha: 1, y: 0, duration: 0.7, ease: 'power2.out', stagger: 0.07, overwrite: true
+    })
+  });
+  // Safety net: motion must never gate content. Anything already on screen that the
+  // engine has not revealed shortly after init is shown regardless.
+  window.setTimeout(() => {
+    const limit = window.innerHeight * 0.95;
+    revealItems.forEach((item) => {
+      const rect = item.getBoundingClientRect();
+      if (rect.top < limit && rect.bottom > 0 && parseFloat(getComputedStyle(item).opacity) < 0.05) {
+        gsap.to(item, { autoAlpha: 1, y: 0, duration: 0.4, overwrite: true });
+      }
+    });
+  }, 1000);
+  return true;
+}
+
+function initGsapEnhancements() {
+  if (Motion.tier === 'static' || !hasMotionEngine()) return;
+  const gsap = window.gsap;
+  if (!registerMotionEngine()) return;
+  if (gsapMedia) gsapMedia.revert();
+  gsapMedia = gsap.matchMedia();
+}
+
+function teardownMotionEngine() {
+  if (gsapMedia) gsapMedia.revert();
+  if (wbTimeline) { wbTimeline.kill(); wbTimeline = null; }
+  if (window.gsap) {
+    try { window.gsap.set(revealItems, { clearProps: 'opacity,visibility,transform' }); } catch (error) { /* engine already gone */ }
+  }
+  rootElement.removeAttribute('data-engine');
+}
+
+// =========================================================
+// Toast
+// =========================================================
 function showToast(message) {
   if (!toast) return;
   toast.textContent = message;
@@ -17,14 +112,13 @@ function showToast(message) {
   showToast.timer = window.setTimeout(() => toast.classList.remove('show'), 1800);
 }
 
-// ----------------------------
-// Theme preference
-// ----------------------------
+// =========================================================
+// Theme
+// =========================================================
 const THEME_KEY = 'portfolio-theme';
 const themeToggle = $('.theme-toggle');
 const themeColorMeta = document.querySelector('meta[name="theme-color"]');
 const colorSchemeMeta = document.querySelector('meta[name="color-scheme"]');
-const lightPreferenceQuery = window.matchMedia('(prefers-color-scheme: light)');
 let explicitTheme = null;
 
 function readStoredTheme() {
@@ -46,9 +140,9 @@ function writeStoredTheme(theme) {
 
 function applyTheme(theme, { persist = false } = {}) {
   const next = theme === 'light' ? 'light' : 'dark';
-  document.documentElement.setAttribute('data-theme', next);
+  rootElement.setAttribute('data-theme', next);
   if (colorSchemeMeta) colorSchemeMeta.setAttribute('content', next);
-  if (themeColorMeta) themeColorMeta.setAttribute('content', next === 'light' ? '#f5f7fa' : '#080a0e');
+  if (themeColorMeta) themeColorMeta.setAttribute('content', next === 'light' ? '#eef2f8' : '#05060a');
   if (themeToggle) {
     const upcoming = next === 'light' ? 'dark' : 'light';
     themeToggle.setAttribute('aria-label', `Switch to ${upcoming} theme`);
@@ -65,7 +159,7 @@ if (storedTheme) explicitTheme = storedTheme;
 applyTheme(storedTheme || (lightPreferenceQuery.matches ? 'light' : 'dark'));
 
 themeToggle?.addEventListener('click', () => {
-  const current = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+  const current = rootElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
   applyTheme(current === 'light' ? 'dark' : 'light', { persist: true });
 });
 
@@ -76,9 +170,9 @@ const handleSystemThemeChange = (event) => {
 if (lightPreferenceQuery.addEventListener) lightPreferenceQuery.addEventListener('change', handleSystemThemeChange);
 else lightPreferenceQuery.addListener(handleSystemThemeChange);
 
-// ----------------------------
+// =========================================================
 // Smooth in-page navigation
-// ----------------------------
+// =========================================================
 function easeInOutQuart(t) {
   return t < 0.5 ? 8 * t * t * t * t : 1 - Math.pow(-2 * t + 2, 4) / 2;
 }
@@ -132,7 +226,7 @@ function scrollToTarget(selector) {
   scrollToTarget.frame = requestAnimationFrame(step);
 }
 
-// If the user takes control mid-animation, stop immediately instead of fighting their input.
+// If the user takes over mid-animation, stop immediately instead of fighting their input.
 window.addEventListener('wheel', cancelSmoothScroll, { passive: true });
 window.addEventListener('touchstart', cancelSmoothScroll, { passive: true });
 document.addEventListener('keydown', (event) => {
@@ -143,9 +237,11 @@ const syncHeader = () => header?.classList.toggle('scrolled', window.scrollY > 1
 syncHeader();
 window.addEventListener('scroll', syncHeader, { passive: true });
 
-// ----------------------------
+// =========================================================
 // Mobile navigation
-// ----------------------------
+// =========================================================
+const navAnchors = $$('.nav-center a[href^="#"]');
+
 menuToggle?.addEventListener('click', () => {
   const open = !navLinks?.classList.contains('open');
   navLinks?.classList.toggle('open', open);
@@ -195,50 +291,613 @@ $$('[data-scroll]').forEach((button) => {
   button.addEventListener('click', () => scrollToTarget(button.dataset.scroll));
 });
 
-// ----------------------------
-// Reveal transitions
-// ----------------------------
+// =========================================================
+// Reveal sequencing
+// =========================================================
 const revealItems = $$('.reveal');
-if ('IntersectionObserver' in window && !reduceMotionQuery.matches) {
+let revealsReady = false;
+
+function revealAll() {
+  revealItems.forEach((item) => item.classList.add('is-visible'));
+}
+
+function initReveals() {
+  if (revealsReady) return;
+  revealsReady = true;
+
+  if (Motion.tier === 'static' || !('IntersectionObserver' in window)) {
+    revealAll();
+    return;
+  }
+
+  // GSAP drives reveals when the verified engine is available. If it misbehaves the
+  // teardown restores inline styles and the observer below takes over.
+  try {
+    if (initGsapReveals()) return;
+  } catch (error) {
+    teardownMotionEngine();
+  }
+
   const revealObserver = new IntersectionObserver((entries) => {
     entries.forEach((entry) => {
       if (!entry.isIntersecting) return;
-      entry.target.classList.add('visible');
+      entry.target.classList.add('is-visible');
       revealObserver.unobserve(entry.target);
     });
-  }, { threshold: 0.1, rootMargin: '0px 0px -35px' });
-  revealItems.forEach((item, index) => {
-    item.style.transitionDelay = `${Math.min(index % 3, 2) * 55}ms`;
+  }, { threshold: 0.12, rootMargin: '0px 0px -40px' });
+
+  // Group-aware stagger so a row of cards sequences instead of popping at once.
+  revealItems.forEach((item) => {
+    const siblings = [...(item.parentElement?.children || [])].filter((node) => node.classList?.contains('reveal'));
+    const index = Math.max(0, siblings.indexOf(item));
+    item.style.transitionDelay = `${Math.min(index, 3) * 70}ms`;
     revealObserver.observe(item);
   });
-} else {
-  revealItems.forEach((item) => item.classList.add('visible'));
 }
 
-const sections = $$('main section[id]');
+// Deferred CDN scripts run before DOMContentLoaded, so initialise here to give the
+// engine a chance to load. The safety timer guarantees content if the CDN stalls.
+function initEnhancements() {
+  initReveals();
+  initGsapEnhancements();
+}
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initEnhancements, { once: true });
+  window.setTimeout(initEnhancements, 900);
+} else {
+  initEnhancements();
+}
+
+// =========================================================
+// Section activation, orbital progress, accent shifts
+// =========================================================
+const sections = $$('[data-section]');
+const progressNode = $('#orbital-progress-node');
+const timeline = $('.timeline');
+const accentMap = {
+  cyan: ['var(--cyan)', 'var(--glow-cyan)'],
+  green: ['var(--green)', 'var(--glow-green)'],
+  warm: ['var(--warm)', 'color-mix(in srgb, var(--warm) 42%, transparent)']
+};
+const sectionAccentName = {
+  hero: 'cyan', projects: 'green', experience: 'cyan', 'more-projects': 'green',
+  skills: 'cyan', about: 'warm', contact: 'green', top: 'cyan', footer: 'cyan'
+};
+
+function setGlobalAccent(name) {
+  const pair = accentMap[name] || accentMap.cyan;
+  rootElement.style.setProperty('--section-accent', pair[0]);
+  rootElement.style.setProperty('--section-accent-soft', pair[1]);
+}
+
+function setActiveNav(id) {
+  navAnchors.forEach((link) => {
+    const active = link.getAttribute('href') === `#${id}`;
+    link.classList.toggle('active', active);
+    if (active) link.setAttribute('aria-current', 'page');
+    else link.removeAttribute('aria-current');
+  });
+}
+
 if ('IntersectionObserver' in window) {
   const sectionObserver = new IntersectionObserver((entries) => {
     entries.forEach((entry) => {
       if (!entry.isIntersecting) return;
-      navAnchors.forEach((link) => {
-        const active = link.getAttribute('href') === `#${entry.target.id}`;
-        link.classList.toggle('active', active);
-        if (active) link.setAttribute('aria-current', 'page');
-        else link.removeAttribute('aria-current');
-      });
+      sections.forEach((section) => section.classList.toggle('is-current', section === entry.target));
+      setActiveNav(entry.target.id);
+      setGlobalAccent(sectionAccentName[entry.target.dataset.section] || 'cyan');
     });
-  }, { rootMargin: '-35% 0px -55% 0px' });
+  }, { rootMargin: '-45% 0px -50% 0px' });
   sections.forEach((section) => sectionObserver.observe(section));
 }
 
+// Timeline milestones light up as their card reaches the reading band.
+const timelineItems = $$('.timeline-item');
+if ('IntersectionObserver' in window) {
+  const milestoneObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => entry.target.classList.toggle('is-active', entry.isIntersecting));
+  }, { rootMargin: '-25% 0px -45% 0px', threshold: 0 });
+  timelineItems.forEach((item) => milestoneObserver.observe(item));
+}
+
+const tiltSurfaces = $$('[data-tilt]');
+let tiltRectsValid = false;
+let tiltMax = 3;
+try {
+  const parsedTilt = parseFloat(getComputedStyle(rootElement).getPropertyValue('--tilt-max'));
+  if (!Number.isNaN(parsedTilt)) tiltMax = parsedTilt;
+} catch (error) { /* keep default */ }
+
+function measureTiltSurfaces() {
+  tiltSurfaces.forEach((surface) => { surface.__rect = surface.getBoundingClientRect(); });
+}
+
+let scrollTicking = false;
+function updateScrollEffects() {
+  scrollTicking = false;
+  const scrollable = Math.max(1, rootElement.scrollHeight - window.innerHeight);
+  const progress = Math.min(1, Math.max(0, window.scrollY / scrollable));
+  if (progressNode) {
+    progressNode.style.left = `${(progress * 100).toFixed(2)}%`;
+    progressNode.style.opacity = progress > 0.015 ? '1' : '0';
+  }
+  if (timeline) {
+    const rect = timeline.getBoundingClientRect();
+    const start = window.innerHeight * 0.8;
+    const span = rect.height + start;
+    const seen = Math.min(1, Math.max(0, (start - rect.top) / span));
+    timeline.style.setProperty('--timeline-progress', `${(seen * 100).toFixed(1)}%`);
+  }
+  tiltRectsValid = false;
+  if (Motion.pointer.active) Motion.pointer.dirty = true;
+}
+
+window.addEventListener('scroll', () => {
+  if (scrollTicking) return;
+  scrollTicking = true;
+  requestAnimationFrame(updateScrollEffects);
+}, { passive: true });
+updateScrollEffects();
+
+// =========================================================
+// Pointer / depth coordinator (full tier)
+// =========================================================
+window.addEventListener('pointermove', (event) => {
+  const p = Motion.pointer;
+  p.x = event.clientX;
+  p.y = event.clientY;
+  p.active = true;
+  p.dirty = true;
+}, { passive: true });
+
+document.documentElement.addEventListener('pointerleave', () => {
+  const p = Motion.pointer;
+  p.active = false;
+  rootElement.style.setProperty('--mx', '0');
+  rootElement.style.setProperty('--my', '0');
+  tiltSurfaces.forEach((surface) => {
+    surface.style.setProperty('--tilt-x', '0deg');
+    surface.style.setProperty('--tilt-y', '0deg');
+    surface.style.setProperty('--lift', '0px');
+  });
+});
+
+function applyPointer() {
+  const p = Motion.pointer;
+  if (!p.active) return;
+  const vw = Math.max(1, window.innerWidth);
+  const vh = Math.max(1, window.innerHeight);
+  p.mx = (p.x / vw) * 2 - 1;
+  p.my = (p.y / vh) * 2 - 1;
+  rootElement.style.setProperty('--mx', p.mx.toFixed(3));
+  rootElement.style.setProperty('--my', p.my.toFixed(3));
+
+  if (!p.dirty) return;
+  p.dirty = false;
+  if (!tiltRectsValid) {
+    measureTiltSurfaces();
+    tiltRectsValid = true;
+  }
+  const pad = 70;
+  tiltSurfaces.forEach((surface) => {
+    const rect = surface.__rect;
+    if (!rect || !rect.width || !rect.height) return;
+    const inside = p.x > rect.left - pad && p.x < rect.right + pad && p.y > rect.top - pad && p.y < rect.bottom + pad;
+    if (inside) {
+      const lx = Math.min(1, Math.max(0, (p.x - rect.left) / rect.width));
+      const ly = Math.min(1, Math.max(0, (p.y - rect.top) / rect.height));
+      surface.style.setProperty('--tilt-y', `${((lx - 0.5) * tiltMax * 2).toFixed(2)}deg`);
+      surface.style.setProperty('--tilt-x', `${((0.5 - ly) * tiltMax * 2).toFixed(2)}deg`);
+      surface.style.setProperty('--lift', '-4px');
+      surface.style.setProperty('--sx', `${(lx * 100).toFixed(1)}%`);
+      surface.style.setProperty('--sy', `${(ly * 100).toFixed(1)}%`);
+    } else {
+      surface.style.setProperty('--tilt-x', '0deg');
+      surface.style.setProperty('--tilt-y', '0deg');
+      surface.style.setProperty('--lift', '0px');
+    }
+  });
+}
+
+// =========================================================
+// Skills constellation selection
+// =========================================================
+const skillsConstellation = $('.skills-constellation');
+const skillCards = skillsConstellation ? $$('.capability[data-skill]', skillsConstellation) : [];
+const skillGeometry = skillsConstellation ? $$('[data-skill-link], [data-skill-node]', skillsConstellation) : [];
+let selectedSkill = null;
+
+function setSkillEmphasis(skill) {
+  if (!skillsConstellation) return;
+  skillsConstellation.classList.toggle('has-active-skill', Boolean(skill));
+  skillGeometry.forEach((item) => {
+    const linked = (item.dataset.skillLink || item.dataset.skillNode || '').split(/\s+/);
+    item.classList.toggle('is-related', Boolean(skill) && linked.includes(skill));
+  });
+}
+
+function selectSkill(card) {
+  const nextSkill = card?.dataset.skill === selectedSkill ? null : card?.dataset.skill || null;
+  selectedSkill = nextSkill;
+  skillCards.forEach((item) => {
+    const selected = item.dataset.skill === selectedSkill;
+    item.classList.toggle('is-selected', selected);
+    item.setAttribute('aria-pressed', String(selected));
+  });
+  const focusedSkill = skillCards.includes(document.activeElement) ? document.activeElement.dataset.skill : null;
+  setSkillEmphasis(selectedSkill || focusedSkill);
+}
+
+skillsConstellation?.addEventListener('click', (event) => {
+  const card = event.target.closest('.capability[data-skill]');
+  if (!card || !skillsConstellation.contains(card)) return;
+  card.focus({ preventScroll: true });
+  selectSkill(card);
+});
+
+skillsConstellation?.addEventListener('keydown', (event) => {
+  const card = event.target.closest('.capability[data-skill]');
+  if (event.key === 'Escape') {
+    selectSkill(null);
+    return;
+  }
+  if (!card || (event.key !== 'Enter' && event.key !== ' ')) return;
+  event.preventDefault();
+  selectSkill(card);
+});
+
+skillsConstellation?.addEventListener('pointerover', (event) => {
+  const card = event.target.closest('.capability[data-skill]');
+  if (card) setSkillEmphasis(card.dataset.skill);
+});
+skillsConstellation?.addEventListener('pointerout', (event) => {
+  const card = event.target.closest('.capability[data-skill]');
+  if (!card || card.contains(event.relatedTarget)) return;
+  setSkillEmphasis(selectedSkill);
+});
+skillsConstellation?.addEventListener('focusin', (event) => {
+  const card = event.target.closest('.capability[data-skill]');
+  if (card) setSkillEmphasis(card.dataset.skill);
+});
+skillsConstellation?.addEventListener('focusout', (event) => {
+  if (skillsConstellation.contains(event.relatedTarget)) return;
+  setSkillEmphasis(selectedSkill);
+});
+
+// =========================================================
+// Cosmic canvas environment
+// =========================================================
+const cosmosCanvas = $('#cosmos-canvas');
+const canvasCtx = cosmosCanvas ? cosmosCanvas.getContext('2d', { alpha: true }) : null;
+if (cosmosCanvas && !canvasCtx) cosmosCanvas.classList.add('canvas-unavailable');
+
+const cosmos = {
+  far: [], near: [], dust: [], events: [],
+  width: 0, height: 0, dpr: 1,
+  nextEventAt: 0,
+  palette: { starA: '150,229,255', starB: '166,255,209', solidA: '176,236,255', solidB: '186,255,214' },
+  measured: false
+};
+
+function readCanvasPalette() {
+  const styles = getComputedStyle(rootElement);
+  const read = (name, fallback) => styles.getPropertyValue(name).trim() || fallback;
+  cosmos.palette = {
+    starA: read('--sky-star-1', '150,229,255'),
+    starB: read('--sky-star-2', '166,255,209'),
+    solidA: read('--sky-star-solid-1', '176,236,255'),
+    solidB: read('--sky-star-solid-2', '186,255,214')
+  };
+}
+readCanvasPalette();
+
+if (cosmosCanvas) {
+  new MutationObserver(readCanvasPalette)
+    .observe(rootElement, { attributes: true, attributeFilter: ['data-theme'] });
+}
+
+function cosmosCounts() {
+  const constrained = Motion.tier === 'constrained';
+  const w = cosmos.width;
+  const base = w < 640 ? 0.5 : w < 1100 ? 0.78 : 1;
+  const far = Math.round((constrained ? 42 : 96) * base);
+  const near = Math.round((constrained ? 12 : 26) * base);
+  const dust = Math.round((constrained ? 26 : 70) * base);
+  return { far: Math.max(18, far), near: Math.max(6, near), dust: Math.max(10, dust) };
+}
+
+function makeFarStar() {
+  return {
+    x: Math.random() * Math.max(1, cosmos.width),
+    y: Math.random() * Math.max(1, cosmos.height),
+    vx: (Math.random() - 0.5) * 0.06,
+    vy: (Math.random() - 0.5) * 0.06,
+    size: 0.5 + Math.random() * 0.9,
+    phase: Math.random() * Math.PI * 2,
+    warm: Math.random() > 0.9,
+    cyan: Math.random() > 0.5
+  };
+}
+
+function makeNearStar() {
+  return {
+    x: Math.random() * Math.max(1, cosmos.width),
+    y: Math.random() * Math.max(1, cosmos.height),
+    vx: (Math.random() - 0.5) * 0.16,
+    vy: (Math.random() - 0.5) * 0.16,
+    size: 1 + Math.random() * 1.6,
+    phase: Math.random() * Math.PI * 2,
+    cyan: Math.random() > 0.5
+  };
+}
+
+function makeDust() {
+  return {
+    x: Math.random() * Math.max(1, cosmos.width),
+    y: Math.random() * Math.max(1, cosmos.height),
+    vx: (Math.random() - 0.5) * 0.03,
+    vy: (Math.random() - 0.5) * 0.03,
+    size: 0.4 + Math.random() * 0.7,
+    alpha: 0.12 + Math.random() * 0.2
+  };
+}
+
+function seedCosmos() {
+  const counts = cosmosCounts();
+  cosmos.far = Array.from({ length: counts.far }, makeFarStar);
+  cosmos.near = Array.from({ length: counts.near }, makeNearStar);
+  cosmos.dust = Array.from({ length: counts.dust }, makeDust);
+  cosmos.events = [];
+}
+
+function resizeCosmos() {
+  if (!cosmosCanvas || !canvasCtx) return;
+  const cap = Motion.tier === 'constrained' ? 1.25 : 1.75;
+  cosmos.dpr = Math.min(window.devicePixelRatio || 1, cap);
+  cosmos.width = window.innerWidth;
+  cosmos.height = window.innerHeight;
+  cosmosCanvas.width = Math.round(cosmos.width * cosmos.dpr);
+  cosmosCanvas.height = Math.round(cosmos.height * cosmos.dpr);
+  cosmosCanvas.style.width = `${cosmos.width}px`;
+  cosmosCanvas.style.height = `${cosmos.height}px`;
+  canvasCtx.setTransform(cosmos.dpr, 0, 0, cosmos.dpr, 0, 0);
+  seedCosmos();
+  cosmos.nextEventAt = performance.now() + 4000 + Math.random() * 4000;
+}
+
+function spawnCelestialEvent(now) {
+  const p = Motion.pointer;
+  const fromTop = Math.random() > 0.45;
+  const speed = 4.4 + Math.random() * 2.8;
+  const angle = 0.4 + Math.random() * 0.26;
+  cosmos.events.push({
+    x: fromTop ? Math.random() * cosmos.width * 0.7 : -40,
+    y: fromTop ? -30 : Math.random() * cosmos.height * 0.4,
+    vx: Math.cos(angle) * speed,
+    vy: Math.sin(angle) * speed,
+    life: 0,
+    maxLife: 100 + Math.random() * 50,
+    length: 60 + Math.random() * 70,
+    warm: Math.random() > 0.75
+  });
+  if (cosmos.events.length > 1) cosmos.events.shift();
+  cosmos.nextEventAt = now + 6000 + Math.random() * 6000;
+}
+
+const pointerInfluence = { radius: 240, strength: 0.09 };
+
+function drawCosmos(now, tier) {
+  if (!canvasCtx) return;
+  const { width, height } = cosmos;
+  canvasCtx.clearRect(0, 0, width, height);
+
+  // Far stars: slow drift under gentle twinkle.
+  for (let i = 0; i < cosmos.far.length; i += 1) {
+    const star = cosmos.far[i];
+    star.x += star.vx;
+    star.y += star.vy;
+    if (star.x < -20) star.x = width + 20;
+    if (star.x > width + 20) star.x = -20;
+    if (star.y < -20) star.y = height + 20;
+    if (star.y > height + 20) star.y = -20;
+    const twinkle = 0.32 + (Math.sin(now / 760 + star.phase + i * 0.27) + 1) * 0.24;
+    canvasCtx.beginPath();
+    canvasCtx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+    canvasCtx.fillStyle = star.warm
+      ? `rgba(255,217,160,${twinkle * 0.8})`
+      : star.cyan
+        ? `rgba(${cosmos.palette.solidA},${twinkle})`
+        : `rgba(${cosmos.palette.solidB},${twinkle})`;
+    canvasCtx.fill();
+  }
+
+  // Dust: faint, very slow, adds depth without noise.
+  for (const mote of cosmos.dust) {
+    mote.x += mote.vx;
+    mote.y += mote.vy;
+    if (mote.x < -10) mote.x = width + 10;
+    if (mote.x > width + 10) mote.x = -10;
+    if (mote.y < -10) mote.y = height + 10;
+    if (mote.y > height + 10) mote.y = -10;
+    canvasCtx.beginPath();
+    canvasCtx.arc(mote.x, mote.y, mote.size, 0, Math.PI * 2);
+    canvasCtx.fillStyle = `rgba(${cosmos.palette.starA},${mote.alpha})`;
+    canvasCtx.fill();
+  }
+
+  // Near stars: react to the pointer with bounded gravity in full tier only.
+  const pointerActive = tier === 'full' && Motion.pointer.active;
+  for (const star of cosmos.near) {
+    if (pointerActive) {
+      const dx = Motion.pointer.x - star.x;
+      const dy = Motion.pointer.y - star.y;
+      const distance = Math.hypot(dx, dy) || 1;
+      if (distance < pointerInfluence.radius) {
+        const force = (1 - distance / pointerInfluence.radius) * pointerInfluence.strength;
+        star.vx += (dx / distance) * force;
+        star.vy += (dy / distance) * force;
+      }
+    }
+    const speed = Math.hypot(star.vx, star.vy);
+    if (speed > 0.7) {
+      star.vx = (star.vx / speed) * 0.7;
+      star.vy = (star.vy / speed) * 0.7;
+    }
+    star.vx *= 0.995;
+    star.vy *= 0.995;
+    if (Math.abs(star.vx) < 0.02) star.vx += (Math.random() - 0.5) * 0.02;
+    if (Math.abs(star.vy) < 0.02) star.vy += (Math.random() - 0.5) * 0.02;
+    star.x += star.vx;
+    star.y += star.vy;
+    if (star.x < -20) star.x = width + 20;
+    if (star.x > width + 20) star.x = -20;
+    if (star.y < -20) star.y = height + 20;
+    if (star.y > height + 20) star.y = -20;
+
+    const twinkle = 0.42 + (Math.sin(now / 620 + star.phase) + 1) * 0.24;
+    canvasCtx.beginPath();
+    canvasCtx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+    canvasCtx.fillStyle = star.cyan
+      ? `rgba(${cosmos.palette.solidA},${twinkle})`
+      : `rgba(${cosmos.palette.solidB},${twinkle})`;
+    canvasCtx.fill();
+  }
+
+  // Restrained celestial events (shooting stars / comet streaks).
+  if (width >= 720 && now >= cosmos.nextEventAt) spawnCelestialEvent(now);
+  cosmos.events = cosmos.events.filter((event) => {
+    event.life += 1;
+    event.x += event.vx;
+    event.y += event.vy;
+    const ratio = event.life / event.maxLife;
+    if (ratio >= 1 || event.x > width + 140 || event.y > height + 140) return false;
+    const alpha = Math.sin(Math.min(1, ratio) * Math.PI) * 0.62;
+    const magnitude = Math.max(0.001, Math.hypot(event.vx, event.vy));
+    const tailX = event.x - (event.vx / magnitude) * event.length;
+    const tailY = event.y - (event.vy / magnitude) * event.length;
+    const gradient = canvasCtx.createLinearGradient(tailX, tailY, event.x, event.y);
+    gradient.addColorStop(0, `rgba(${cosmos.palette.starA},0)`);
+    gradient.addColorStop(1, event.warm
+      ? `rgba(255,217,160,${alpha})`
+      : `rgba(${cosmos.palette.solidA},${alpha})`);
+    canvasCtx.beginPath();
+    canvasCtx.moveTo(tailX, tailY);
+    canvasCtx.lineTo(event.x, event.y);
+    canvasCtx.strokeStyle = gradient;
+    canvasCtx.lineWidth = 1.2;
+    canvasCtx.stroke();
+    return true;
+  });
+}
+
+// =========================================================
+// Single coordinated animation loop
+// =========================================================
+let cosmicFrame = 0;
+let cosmicRunning = true;
+let lastDraw = 0;
+
+function shouldRunCosmic() {
+  if (document.hidden || !cosmicRunning) return false;
+  if (Motion.tier === 'full') return true;
+  if (Motion.tier === 'constrained' && canvasCtx) return true;
+  return false;
+}
+
+function cosmicLoop(now) {
+  cosmicFrame = 0;
+  if (!shouldRunCosmic()) return;
+  if (Motion.tier === 'full') applyPointer();
+  if (canvasCtx) {
+    const minFrame = 1000 / (Motion.tier === 'full' ? 60 : 30);
+    if (now - lastDraw >= minFrame) {
+      lastDraw = now;
+      drawCosmos(now, Motion.tier);
+    }
+  }
+  if (shouldRunCosmic()) cosmicFrame = requestAnimationFrame(cosmicLoop);
+}
+
+function startCosmic() {
+  if (cosmicFrame || !shouldRunCosmic()) return;
+  cosmicFrame = requestAnimationFrame(cosmicLoop);
+}
+function stopCosmic() {
+  if (cosmicFrame) cancelAnimationFrame(cosmicFrame);
+  cosmicFrame = 0;
+}
+
+if (cosmosCanvas && canvasCtx) {
+  cosmos.measured = true;
+  resizeCosmos();
+} else {
+  measureTiltSurfaces();
+  tiltRectsValid = true;
+}
+
+let resizeTimer = 0;
+window.addEventListener('resize', () => {
+  window.clearTimeout(resizeTimer);
+  resizeTimer = window.setTimeout(() => {
+    refreshMotionTier();
+    if (cosmosCanvas && canvasCtx) resizeCosmos();
+    tiltRectsValid = false;
+    if (Motion.tier === 'full' && Motion.pointer.active) Motion.pointer.dirty = true;
+    if (shouldRunCosmic()) startCosmic();
+    else stopCosmic();
+  }, 140);
+}, { passive: true });
+
+document.addEventListener('visibilitychange', () => {
+  cosmicRunning = !document.hidden;
+  if (cosmicRunning) {
+    lastDraw = 0;
+    if (cosmosCanvas) cosmos.nextEventAt = performance.now() + 4000 + Math.random() * 4000;
+    startCosmic();
+  } else {
+    stopCosmic();
+  }
+});
+
+document.addEventListener('motion:tierchange', () => {
+  if (Motion.tier === 'static') {
+    stopCosmic();
+    teardownMotionEngine();
+    rootElement.style.setProperty('--mx', '0');
+    rootElement.style.setProperty('--my', '0');
+    revealsReady = true;
+    revealAll();
+  } else {
+    startCosmic();
+    if (!revealsReady) initReveals();
+    initGsapEnhancements();
+  }
+});
+
+reduceMotionQuery.addEventListener?.('change', () => {
+  refreshMotionTier();
+});
+navigator.connection?.addEventListener?.('change', () => {
+  refreshMotionTier();
+});
+
+startCosmic();
+if (Motion.tier === 'full') {
+  measureTiltSurfaces();
+  tiltRectsValid = true;
+}
+
+// =========================================================
+// Footer year + terminal date
+// =========================================================
 const yearNode = document.getElementById('year');
 if (yearNode) yearNode.textContent = new Date().getFullYear();
 const terminalDate = $('#terminal-date');
 if (terminalDate) terminalDate.textContent = new Intl.DateTimeFormat('en-CA', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date());
 
-// ----------------------------
+// =========================================================
 // Interactive hero terminal
-// ----------------------------
+// =========================================================
 const terminalForm = $('#terminal-form');
 const terminalInput = $('#terminal-input');
 const terminalOutput = $('#terminal-output');
@@ -253,7 +912,7 @@ const terminalCommands = {
     '<span class="term-output"><strong>projects</strong>    jump to the flagship project</span>',
     '<span class="term-output"><strong>whatbroke</strong>   open the flagship Linux tool</span>',
     '<span class="term-output"><strong>story</strong>       why I built it</span>',
-    '<span class="term-output"><strong>skills</strong>      jump to capabilities</span>',
+    '<span class="term-output"><strong>skills</strong>      jump to skills</span>',
     '<span class="term-output"><strong>experience</strong>  professional timeline</span>',
     '<span class="term-output"><strong>about</strong>       about me</span>',
     '<span class="term-output"><strong>movie</strong>       movie dashboard project</span>',
@@ -265,8 +924,8 @@ const terminalCommands = {
     '<span class="term-output"><strong>clear</strong>       clear terminal</span>'
   ],
   whoami: () => [
-    '<span class="term-output">Karthik Saligram — Software Developer</span>',
-    '<span class="term-output muted-line">Full-stack · Backend · Cloud · Systems</span>'
+    '<span class="term-output">Karthik Saligram — Full Stack Developer</span>',
+    '<span class="term-output muted-line">Production software · Backend · AWS · AI-assisted</span>'
   ],
   projects: () => {
     setTimeout(() => scrollToTarget('#projects'), 180);
@@ -290,8 +949,8 @@ const terminalCommands = {
     ];
   },
   skills: () => {
-    setTimeout(() => scrollToTarget('#capabilities'), 180);
-    return ['<span class="term-output">Opening <strong>/capabilities</strong>...</span>'];
+    setTimeout(() => scrollToTarget('#skills'), 180);
+    return ['<span class="term-output">Opening <strong>/skills</strong>...</span>'];
   },
   stack: () => terminalCommands.skills(),
   experience: () => {
@@ -331,10 +990,18 @@ const terminalCommands = {
     return ['<span class="term-output">Opening résumé ↗</span>'];
   },
   pwd: () => ['<span class="term-output">/home/karthik/portfolio</span>'],
-  ls: () => ['<span class="term-output"><strong>projects/</strong> &nbsp; <strong>experience/</strong> &nbsp; <strong>capabilities/</strong> &nbsp; about &nbsp; resume.pdf</span>'],
+  ls: () => ['<span class="term-output"><strong>projects/</strong> &nbsp; <strong>experience/</strong> &nbsp; <strong>skills/</strong> &nbsp; about &nbsp; resume.pdf</span>'],
   '?': () => terminalCommands.help(),
   clear: () => []
 };
+
+function signalTerminalResponse() {
+  if (!terminalWindow) return;
+  terminalWindow.classList.remove('is-responding');
+  void terminalWindow.offsetWidth;
+  terminalWindow.classList.add('is-responding');
+  window.setTimeout(() => terminalWindow.classList.remove('is-responding'), 520);
+}
 
 function appendTerminalLine(html) {
   if (!terminalOutput) return;
@@ -364,6 +1031,7 @@ function runTerminalCommand(rawCommand) {
   spacer.className = 'terminal-gap';
   terminalOutput.appendChild(spacer);
   terminalOutput.scrollTop = terminalOutput.scrollHeight;
+  signalTerminalResponse();
 }
 
 terminalForm?.addEventListener('submit', (event) => {
@@ -371,6 +1039,9 @@ terminalForm?.addEventListener('submit', (event) => {
   runTerminalCommand(terminalInput.value);
   terminalInput.value = '';
 });
+
+terminalInput?.addEventListener('focus', () => terminalWindow?.classList.add('is-focused'));
+terminalInput?.addEventListener('blur', () => terminalWindow?.classList.remove('is-focused'));
 
 terminalInput?.addEventListener('keydown', (event) => {
   if (event.key === 'ArrowUp') {
@@ -418,9 +1089,9 @@ $$('[data-terminal-command]').forEach((button) => {
   });
 });
 
-// ----------------------------
-// What Broke? interactive demo
-// ----------------------------
+// =========================================================
+// What Broke? analysis sequence
+// =========================================================
 const wbDemo = $('#whatbroke-demo');
 const scenarioTabs = $$('.scenario-tab');
 const wbRun = $('#run-analysis');
@@ -446,7 +1117,7 @@ const wbScenarios = {
       reboot: { label: 'EVENT 02 · BOOT BOUNDARY', title: 'system restarted', copy: 'The machine rebooted after the package change, creating a clean before/after boundary for comparison.' },
       failure: { label: 'EVENT 03 · NEW FAILURE', title: 'mt7921e timeout', copy: 'The Wi‑Fi driver timeout appears in the target boot and is absent from the selected earlier boots.' }
     },
-    output: `<span class="term-label">NEWLY OBSERVED ERROR</span>\n<span class="term-strong">mt7921e: Timeout for driver own</span>\n\ncurrent boot      <span class="term-good">17 occurrences</span>\nprevious boots    <span class="term-good">0 occurrences</span>\n\n<span class="term-label">PRECEDING CHANGES</span>\nlinux-firmware    upgraded\nlinux             upgraded\nNetworkManager    upgraded\n\n<span class="term-note">Evidence shown. Cause not assumed.</span>`
+    output: `<span class="term-label">NEWLY OBSERVED ERROR</span>\n<span class="term-strong">mt7921e: Timeout for driver own</span>\n\ncurrent boot      <span class="term-good">17 occurrences</span>\nprevious boots    <span class="term-good">0 occurrences</span>\n\n<span class="term-label">PRECEDING CHANGES</span>\nlinux-firmware    upgraded\nlinux             upgraded\nNetworkManager    upgraded\n\n<span class="term-note">Candidate changes ranked. The engineer makes the call.</span>`
   },
   service: {
     changeTime: '14:03', rebootTime: '14:11', failureTime: '14:12', change: 'docker upgraded', failure: 'docker.service failed', previous: '8', signal: 'Service failure appeared after update',
@@ -455,7 +1126,7 @@ const wbScenarios = {
       reboot: { label: 'EVENT 02 · BOOT BOUNDARY', title: 'system restarted', copy: 'The reboot separates the package transaction from the first failed service start.' },
       failure: { label: 'EVENT 03 · SERVICE FAILURE', title: 'docker.service failed', copy: 'systemd reports a new exit-code failure for docker.service compared with the selected earlier boots.' }
     },
-    output: `<span class="term-label">NEWLY OBSERVED ERROR</span>\n<span class="term-strong">docker.service: Failed with result exit-code</span>\n\ncurrent boot      <span class="term-good">4 occurrences</span>\nprevious boots    <span class="term-good">0 occurrences</span>\n\n<span class="term-label">PRECEDING CHANGES</span>\ndocker            upgraded\ncontainerd        upgraded\nrunc              upgraded\n\n<span class="term-note">Temporal candidates, not a diagnosis.</span>`
+    output: `<span class="term-label">NEWLY OBSERVED ERROR</span>\n<span class="term-strong">docker.service: Failed with result exit-code</span>\n\ncurrent boot      <span class="term-good">4 occurrences</span>\nprevious boots    <span class="term-good">0 occurrences</span>\n\n<span class="term-label">PRECEDING CHANGES</span>\ndocker            upgraded\ncontainerd        upgraded\nrunc              upgraded\n\n<span class="term-note">Candidate changes ranked for the engineer to judge.</span>`
   },
   package: {
     changeTime: '18:41', rebootTime: '18:49', failureTime: '18:53', change: 'openssl upgraded', failure: 'shared library error', previous: '10', signal: 'New application failure signature',
@@ -464,15 +1135,20 @@ const wbScenarios = {
       reboot: { label: 'EVENT 02 · BOOT BOUNDARY', title: 'system restarted', copy: 'The reboot provides the point where the changed runtime environment becomes active.' },
       failure: { label: 'EVENT 03 · APPLICATION FAILURE', title: 'shared library error', copy: 'The target boot contains a new loader failure signature that was not observed in the selected baseline boots.' }
     },
-    output: `<span class="term-label">NEWLY OBSERVED ERROR</span>\n<span class="term-strong">myapp: error while loading shared libraries</span>\n\ncurrent boot      <span class="term-good">6 occurrences</span>\nprevious boots    <span class="term-good">0 occurrences</span>\n\n<span class="term-label">PRECEDING CHANGES</span>\nopenssl           upgraded\nglibc             upgraded\nca-certificates   upgraded\n\n<span class="term-note">A starting point for investigation.</span>`
+    output: `<span class="term-label">NEWLY OBSERVED ERROR</span>\n<span class="term-strong">myapp: error while loading shared libraries</span>\n\ncurrent boot      <span class="term-good">6 occurrences</span>\nprevious boots    <span class="term-good">0 occurrences</span>\n\n<span class="term-label">PRECEDING CHANGES</span>\nopenssl           upgraded\nglibc             upgraded\nca-certificates   upgraded\n\n<span class="term-note">Candidate changes ranked for investigation.</span>`
   }
 };
 let currentScenario = 'wifi';
 let wbTimers = [];
+let wbTimeline = null;
 
 function clearWbTimers() {
   wbTimers.forEach(window.clearTimeout);
   wbTimers = [];
+  if (wbTimeline) {
+    wbTimeline.kill();
+    wbTimeline = null;
+  }
 }
 
 function activateRovingTab(tabs, activeTab, panel) {
@@ -537,162 +1213,83 @@ wbEventButtons.forEach((button) => {
 wireRovingTabKeyboard(scenarioTabs);
 scenarioTabs.forEach((tab) => tab.addEventListener('click', () => {
   clearWbTimers();
-  wbDemo?.classList.remove('running');
+  wbDemo?.classList.remove('running', 'complete');
   if (wbRun) wbRun.disabled = false;
   renderWbScenario(tab.dataset.scenario);
 }));
 
-wbRun?.addEventListener('click', () => {
+function runWbSequence(scenario) {
   clearWbTimers();
-  const scenario = wbScenarios[currentScenario];
   if (!scenario || !wbDemo || !wbOutput || !wbRunState) return;
   wbRun.disabled = true;
+  wbDemo.classList.remove('complete');
   wbDemo.classList.add('running');
-  wbRunState.textContent = 'collecting journal…';
-  wbOutput.textContent = 'collecting boot history...\nreading priority 0–3 journal records...';
-  inspectWbEvent('change');
 
-  wbTimers.push(window.setTimeout(() => {
-    wbRunState.textContent = 'reading change history…';
+  // Deterministic sequence: scan → ordered events → failure isolation → preceding changes → conclusion.
+  const step0 = () => {
+    wbRunState.textContent = 'scan started · collecting journal…';
+    wbOutput.textContent = 'collecting boot history...\nreading priority 0–3 journal records...';
+    inspectWbEvent('change');
+  };
+  const step1 = () => {
+    wbRunState.textContent = 'step 1/4 · scanning system events';
     inspectWbEvent('change');
     wbOutput.textContent += '\nreading package history...';
-  }, 420));
-  wbTimers.push(window.setTimeout(() => {
-    wbRunState.textContent = 'crossing boot boundary…';
+  };
+  const step2 = () => {
+    wbRunState.textContent = 'step 2/4 · crossing boot boundary';
     inspectWbEvent('reboot');
     wbOutput.textContent += '\nresolving target boot and baseline boots...';
-  }, 900));
-  wbTimers.push(window.setTimeout(() => {
-    wbRunState.textContent = 'comparing signatures…';
+  };
+  const step3 = () => {
+    wbRunState.textContent = 'step 3/4 · isolating newly observed failure';
     inspectWbEvent('failure');
     wbOutput.textContent += `\ncomparing current boot against ${scenario.previous} earlier boots...`;
-  }, 1380));
-  wbTimers.push(window.setTimeout(() => {
-    wbRunState.textContent = 'analysis complete';
+  };
+  const step4 = () => {
+    wbRunState.textContent = 'step 4/4 · correlating preceding changes';
+    inspectWbEvent('failure');
+    wbOutput.textContent += '\nranking package changes before the failure signature...';
+  };
+  const finish = () => {
+    wbRunState.textContent = 'analysis complete · evidence conclusion';
     wbOutput.innerHTML = scenario.output;
     wbDemo.classList.remove('running');
+    wbDemo.classList.add('complete');
     wbRun.disabled = false;
     inspectWbEvent('failure');
-  }, 2050));
-});
+    window.setTimeout(() => wbDemo.classList.remove('complete'), 1200);
+  };
 
-// ----------------------------
-// Pronunciation demo
-// ----------------------------
-const alignmentDemo = $('#alignment-demo');
-const runAlignment = $('#run-alignment');
-const alignmentFill = $('#alignment-fill');
-const alignmentScore = $('#alignment-score');
-const alignmentStatus = $('#alignment-status');
+  step0();
 
-runAlignment?.addEventListener('click', () => {
-  if (!alignmentDemo || !alignmentFill || !alignmentScore || !alignmentStatus) return;
-  alignmentDemo.classList.remove('running');
-  void alignmentDemo.offsetWidth;
-  alignmentDemo.classList.add('running');
-  alignmentFill.style.width = '0%';
-  alignmentScore.textContent = '…';
-  alignmentStatus.textContent = 'Aligning MFCC sequences';
-  runAlignment.disabled = true;
-  setTimeout(() => { alignmentFill.style.width = '82%'; }, 80);
-  setTimeout(() => {
-    alignmentScore.textContent = '0.82';
-    alignmentStatus.textContent = 'Aligned · timing drift near phrase end';
-    runAlignment.disabled = false;
-  }, 1400);
-});
-
-// ----------------------------
-// NL → SQL illustrative demo
-// ----------------------------
-const sqlQuestion = $('#sql-question');
-const sqlOutput = $('#sql-output');
-const translateSql = $('#translate-sql');
-
-const sqlExamples = {
-  'show patients admitted this month': `<code><span class="sql-keyword">SELECT</span> patient_id, admitted_at\n<span class="sql-keyword">FROM</span> <span class="sql-table">admissions</span>\n<span class="sql-keyword">WHERE</span> admitted_at &gt;= DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1);</code>`,
-  'count appointments by department': `<code><span class="sql-keyword">SELECT</span> department_id, COUNT(*) <span class="sql-keyword">AS</span> appointment_count\n<span class="sql-keyword">FROM</span> <span class="sql-table">appointments</span>\n<span class="sql-keyword">GROUP BY</span> department_id\n<span class="sql-keyword">ORDER BY</span> appointment_count <span class="sql-keyword">DESC</span>;</code>`,
-  'show the 5 most recent lab results': `<code><span class="sql-keyword">SELECT TOP</span> 5 patient_id, test_name, result_value, result_date\n<span class="sql-keyword">FROM</span> <span class="sql-table">lab_results</span>\n<span class="sql-keyword">ORDER BY</span> result_date <span class="sql-keyword">DESC</span>;</code>`
-};
-
-$$('[data-sql-example]').forEach((button) => button.addEventListener('click', () => {
-  if (sqlQuestion) sqlQuestion.value = button.dataset.sqlExample;
-  translateSql?.click();
-}));
-
-sqlQuestion?.addEventListener('keydown', (event) => {
-  if (event.key === 'Enter') {
-    event.preventDefault();
-    translateSql?.click();
+  // The verified engine drives the timeline; timers remain the fallback.
+  if (hasMotionEngine() && Motion.tier !== 'static') {
+    wbTimeline = window.gsap.timeline();
+    wbTimeline
+      .call(step1, null, 0.44)
+      .call(step2, null, 0.9)
+      .call(step3, null, 1.36)
+      .call(step4, null, 1.78)
+      .call(finish, null, 2.15);
+    return;
   }
-});
 
-translateSql?.addEventListener('click', () => {
-  if (!sqlQuestion || !sqlOutput) return;
-  const key = sqlQuestion.value.trim().toLowerCase();
-  translateSql.disabled = true;
-  const original = translateSql.textContent;
-  translateSql.textContent = 'Validating schema…';
-  sqlOutput.textContent = '-- translating natural language\n-- checking allowed tables / columns...';
-  setTimeout(() => {
-    sqlOutput.innerHTML = sqlExamples[key] || `<code><span class="sql-keyword">-- illustrative demo</span>\nQuestion understood, but this static portfolio only renders the bundled examples.\nTry one of the buttons above.</code>`;
-    translateSql.textContent = original;
-    translateSql.disabled = false;
-  }, 650);
-});
-
-// ----------------------------
-// Movie demo
-// ----------------------------
-const movieSearch = $('#movie-search');
-const movieResults = $$('.movie-result');
-const movieEmpty = $('#movie-empty');
-const movieDetail = {
-  meta: $('#movie-detail-meta'), title: $('#movie-detail-title'), copy: $('#movie-detail-copy'), tags: $('#movie-detail-tags')
-};
-const movieData = {
-  interstellar: { meta: '2014 · SCI‑FI', title: 'Interstellar', copy: 'A compact sample of the browse-and-select interaction from the older movie dashboard project.', tags: ['Search', 'API data', 'Responsive UI'] },
-  'dark-knight': { meta: '2008 · ACTION', title: 'The Dark Knight', copy: 'Selecting a result updates the detail view without leaving the project card — the same interaction pattern the original dashboard was built around.', tags: ['Filtering', 'Movie metadata', 'Card UI'] },
-  arrival: { meta: '2016 · SCI‑FI', title: 'Arrival', copy: 'The portfolio version keeps the interaction local and lightweight while the linked project shows the original movie-discovery dashboard.', tags: ['JavaScript', 'API-driven', 'Responsive'] }
-};
-
-function selectMovie(key, { focus = false } = {}) {
-  const data = movieData[key];
-  if (!data) return;
-  movieResults.forEach((result) => {
-    const active = result.dataset.movie === key;
-    result.classList.toggle('active', active);
-    result.setAttribute('aria-selected', String(active));
-    if (active && focus) result.focus({ preventScroll: true });
-  });
-  if (movieDetail.meta) movieDetail.meta.textContent = data.meta;
-  if (movieDetail.title) movieDetail.title.textContent = data.title;
-  if (movieDetail.copy) movieDetail.copy.textContent = data.copy;
-  if (movieDetail.tags) movieDetail.tags.innerHTML = data.tags.map((tag) => `<span>${tag}</span>`).join('');
+  wbTimers.push(window.setTimeout(step1, 440));
+  wbTimers.push(window.setTimeout(step2, 900));
+  wbTimers.push(window.setTimeout(step3, 1360));
+  wbTimers.push(window.setTimeout(step4, 1780));
+  wbTimers.push(window.setTimeout(finish, 2150));
 }
 
-movieSearch?.addEventListener('input', () => {
-  const query = movieSearch.value.trim().toLowerCase();
-  let visible = 0;
-  let firstVisible = null;
-  movieResults.forEach((result) => {
-    const match = result.dataset.title.toLowerCase().includes(query);
-    result.classList.toggle('hidden', !match);
-    if (match) {
-      visible += 1;
-      if (!firstVisible) firstVisible = result;
-    }
-  });
-  if (movieEmpty) movieEmpty.hidden = visible !== 0;
-  if (firstVisible && !movieResults.some((result) => result.classList.contains('active') && !result.classList.contains('hidden'))) {
-    selectMovie(firstVisible.dataset.movie);
-  }
-});
-movieResults.forEach((result) => result.addEventListener('click', () => selectMovie(result.dataset.movie)));
+wbRun?.addEventListener('click', () => runWbSequence(wbScenarios[currentScenario]));
 
-// ----------------------------
+// Supporting projects are presented as uniform, static cards (no in-card demos),
+// so the bespoke alignment, SQL, and movie widget scripts were removed here.
+
+// =========================================================
 // Copy email
-// ----------------------------
+// =========================================================
 $$('.copy-email').forEach((button) => {
   button.addEventListener('click', async () => {
     const email = button.dataset.email;
@@ -704,196 +1301,3 @@ $$('.copy-email').forEach((button) => {
     }
   });
 });
-
-// ----------------------------
-// Scroll progress
-// ----------------------------
-const scrollProgressBar = $('#scroll-progress-bar');
-let scrollTicking = false;
-
-function updateScrollProgress() {
-  if (!scrollProgressBar) return;
-  const scrollable = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
-  const progress = Math.min(1, Math.max(0, window.scrollY / scrollable));
-  scrollProgressBar.style.transform = `scaleX(${progress})`;
-  scrollTicking = false;
-}
-
-window.addEventListener('scroll', () => {
-  if (scrollTicking) return;
-  scrollTicking = true;
-  requestAnimationFrame(updateScrollProgress);
-}, { passive: true });
-updateScrollProgress();
-
-// ----------------------------
-// Ambient background — low-density, non-interactive stars
-// ----------------------------
-const ambientCanvas = $('#ambient-canvas');
-if (ambientCanvas && !reduceMotionQuery.matches) {
-  const ctx = ambientCanvas.getContext('2d', { alpha: true });
-  if (!ctx) {
-    ambientCanvas.classList.add('canvas-unavailable');
-  } else {
-    // Star colours are read from CSS custom properties so the field follows the theme.
-    let skyPalette = {};
-    function readSkyPalette() {
-      const styles = getComputedStyle(document.documentElement);
-      const read = (name, fallback) => styles.getPropertyValue(name).trim() || fallback;
-      skyPalette = {
-        star1: read('--sky-star-1', '110,220,255'),
-        star2: read('--sky-star-2', '114,246,177'),
-        solid1: read('--sky-star-solid-1', '150,229,255'),
-        solid2: read('--sky-star-solid-2', '166,255,209')
-      };
-    }
-    readSkyPalette();
-
-    // Re-read the palette when the theme changes so the field stays visible.
-    const themeObserver = new MutationObserver(readSkyPalette);
-    themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
-
-    const saveData = Boolean(navigator.connection?.saveData);
-    const lowPowerDevice = (navigator.hardwareConcurrency || 8) <= 4;
-    let stars = [];
-    let shootingStars = [];
-    let nextShootingStarAt = performance.now() + 6000 + Math.random() * 6000;
-    let canvasWidth = 0;
-    let canvasHeight = 0;
-    let canvasDpr = 1;
-    let ambientFrame = 0;
-    let ambientRunning = true;
-    let lastAmbientDraw = 0;
-
-    function starCount() {
-      const constrained = saveData || lowPowerDevice;
-      if (canvasWidth < 600) return constrained ? 16 : 24;
-      if (canvasWidth < 1000) return constrained ? 24 : 38;
-      return constrained ? 32 : 56;
-    }
-
-    function makeStar() {
-      return {
-        x: Math.random() * Math.max(1, canvasWidth),
-        y: Math.random() * Math.max(1, canvasHeight),
-        vx: (Math.random() - 0.5) * 0.09,
-        vy: (Math.random() - 0.5) * 0.09,
-        size: 0.7 + Math.random() * 1.2,
-        phase: Math.random() * Math.PI * 2,
-        cyan: Math.random() > 0.5
-      };
-    }
-
-    function resetStars() {
-      stars = Array.from({ length: starCount() }, makeStar);
-    }
-
-    function spawnShootingStar(now) {
-      if (saveData || lowPowerDevice || canvasWidth < 720) return;
-      const fromTop = Math.random() > 0.45;
-      const speed = 4.6 + Math.random() * 2.6;
-      const angle = 0.42 + Math.random() * 0.24;
-      shootingStars.push({
-        x: fromTop ? Math.random() * canvasWidth * 0.7 : -40,
-        y: fromTop ? -30 : Math.random() * canvasHeight * 0.4,
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed,
-        life: 0,
-        maxLife: 95 + Math.random() * 45,
-        length: 50 + Math.random() * 55
-      });
-      if (shootingStars.length > 1) shootingStars.shift();
-      nextShootingStarAt = now + 9000 + Math.random() * 9000;
-    }
-
-    function drawStars(now) {
-      stars.forEach((star, index) => {
-        star.x += star.vx;
-        star.y += star.vy;
-        if (star.x > canvasWidth + 20) star.x = -20;
-        if (star.x < -20) star.x = canvasWidth + 20;
-        if (star.y > canvasHeight + 20) star.y = -20;
-        if (star.y < -20) star.y = canvasHeight + 20;
-
-        const twinkle = 0.4 + (Math.sin(now / 720 + star.phase + index * 0.31) + 1) * 0.26;
-        ctx.beginPath();
-        ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
-        ctx.fillStyle = star.cyan
-          ? `rgba(${skyPalette.solid1},${twinkle})`
-          : `rgba(${skyPalette.solid2},${twinkle})`;
-        ctx.fill();
-      });
-
-      if (now >= nextShootingStarAt) spawnShootingStar(now);
-      shootingStars = shootingStars.filter((star) => {
-        star.life += 1;
-        star.x += star.vx;
-        star.y += star.vy;
-        const lifeRatio = star.life / star.maxLife;
-        if (lifeRatio >= 1 || star.x > canvasWidth + 120 || star.y > canvasHeight + 120) return false;
-        const alpha = Math.sin(Math.min(1, lifeRatio) * Math.PI) * 0.6;
-        const magnitude = Math.max(0.001, Math.hypot(star.vx, star.vy));
-        const tailX = star.x - (star.vx / magnitude) * star.length;
-        const tailY = star.y - (star.vy / magnitude) * star.length;
-        const gradient = ctx.createLinearGradient(tailX, tailY, star.x, star.y);
-        gradient.addColorStop(0, `rgba(${skyPalette.star1},0)`);
-        gradient.addColorStop(1, `rgba(${skyPalette.solid1},${alpha})`);
-        ctx.beginPath();
-        ctx.moveTo(tailX, tailY);
-        ctx.lineTo(star.x, star.y);
-        ctx.strokeStyle = gradient;
-        ctx.lineWidth = 1.1;
-        ctx.stroke();
-        return true;
-      });
-    }
-
-    function resizeAmbientCanvas() {
-      canvasDpr = Math.min(window.devicePixelRatio || 1, 1.5);
-      canvasWidth = window.innerWidth;
-      canvasHeight = window.innerHeight;
-      ambientCanvas.width = Math.round(canvasWidth * canvasDpr);
-      ambientCanvas.height = Math.round(canvasHeight * canvasDpr);
-      ambientCanvas.style.width = `${canvasWidth}px`;
-      ambientCanvas.style.height = `${canvasHeight}px`;
-      ctx.setTransform(canvasDpr, 0, 0, canvasDpr, 0, 0);
-      resetStars();
-      shootingStars = [];
-      nextShootingStarAt = performance.now() + 6000 + Math.random() * 6000;
-    }
-
-    function drawAmbientFrame(now = performance.now()) {
-      if (!ambientRunning) return;
-      const minFrameTime = 1000 / 30;
-      if (now - lastAmbientDraw < minFrameTime) {
-        ambientFrame = requestAnimationFrame(drawAmbientFrame);
-        return;
-      }
-      lastAmbientDraw = now;
-      ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-      drawStars(now);
-      ambientFrame = requestAnimationFrame(drawAmbientFrame);
-    }
-
-    let resizeTimer = 0;
-    window.addEventListener('resize', () => {
-      window.clearTimeout(resizeTimer);
-      resizeTimer = window.setTimeout(resizeAmbientCanvas, 100);
-    }, { passive: true });
-
-    document.addEventListener('visibilitychange', () => {
-      ambientRunning = !document.hidden;
-      if (ambientRunning) {
-        lastAmbientDraw = 0;
-        nextShootingStarAt = performance.now() + 6000 + Math.random() * 6000;
-        cancelAnimationFrame(ambientFrame);
-        ambientFrame = requestAnimationFrame(drawAmbientFrame);
-      } else {
-        cancelAnimationFrame(ambientFrame);
-      }
-    });
-
-    resizeAmbientCanvas();
-    ambientFrame = requestAnimationFrame(drawAmbientFrame);
-  }
-}

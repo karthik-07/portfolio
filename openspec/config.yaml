@@ -5,6 +5,7 @@ schema: spec-driven
 # Add your tech stack, conventions, style guides, domain knowledge, etc.
 context: |
   Tech stack: Vanilla HTML5, CSS3, JavaScript (ES6+) (no build)
+  Please consider performance as well
   structure: single-page portfolio (index.html, style.css, mediaqueries.css, script.js)
   Also dont use unecessary tests and libraries unless i tell you. And if you have any questions about the project, ask me before proceeding. 
   Make sure the text in the cards are also responsive and the text is not cut off in any screen size. Don't overcomplicate the code and keep it simple. Use semantic HTML5 elements and follow BEM methodology for CSS class naming. Ensure accessibility standards are met (WCAG 2.1). Optimize images and media for web performance.
