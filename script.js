@@ -5,8 +5,9 @@ const header = $('.site-header');
 const menuToggle = $('.menu-toggle');
 const navLinks = $('#nav-links');
 const navAnchors = $$('.nav-center a[href^="#"]');
-const glow = $('.cursor-glow');
 const toast = $('#toast');
+
+const reduceMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
 
 function showToast(message) {
   if (!toast) return;
@@ -16,45 +17,68 @@ function showToast(message) {
   showToast.timer = window.setTimeout(() => toast.classList.remove('show'), 1800);
 }
 
-const reduceMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+// ----------------------------
+// Theme preference
+// ----------------------------
+const THEME_KEY = 'portfolio-theme';
+const themeToggle = $('.theme-toggle');
+const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+const colorSchemeMeta = document.querySelector('meta[name="color-scheme"]');
+const lightPreferenceQuery = window.matchMedia('(prefers-color-scheme: light)');
+let explicitTheme = null;
 
-const isFinePointer = window.matchMedia('(pointer:fine)').matches;
-
-function activateRovingTab(tabs, activeTab, panel) {
-  tabs.forEach((tab) => {
-    const active = tab === activeTab;
-    tab.tabIndex = active ? 0 : -1;
-    tab.setAttribute('aria-selected', String(active));
-  });
-  if (panel && activeTab?.id) panel.setAttribute('aria-labelledby', activeTab.id);
+function readStoredTheme() {
+  try {
+    const value = window.localStorage.getItem(THEME_KEY);
+    return value === 'light' || value === 'dark' ? value : null;
+  } catch (error) {
+    return null;
+  }
 }
 
-function wireRovingTabKeyboard(tabs) {
-  tabs.forEach((tab, index) => {
-    tab.addEventListener('keydown', (event) => {
-      if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.key)) return;
-      event.preventDefault();
-      let nextIndex = index;
-      if (event.key === 'Home') nextIndex = 0;
-      else if (event.key === 'End') nextIndex = tabs.length - 1;
-      else if (event.key === 'ArrowRight' || event.key === 'ArrowDown') nextIndex = (index + 1) % tabs.length;
-      else nextIndex = (index - 1 + tabs.length) % tabs.length;
-      const next = tabs[nextIndex];
-      next?.focus();
-      next?.click();
-    });
-  });
+function writeStoredTheme(theme) {
+  try {
+    window.localStorage.setItem(THEME_KEY, theme);
+  } catch (error) {
+    // Storage can be blocked; the in-memory choice still drives the current visit.
+  }
 }
 
-function pulseTarget(target) {
-  if (!target) return;
-  target.classList.remove('project-targeted');
-  requestAnimationFrame(() => {
-    target.classList.add('project-targeted');
-    window.setTimeout(() => target.classList.remove('project-targeted'), 1200);
-  });
+function applyTheme(theme, { persist = false } = {}) {
+  const next = theme === 'light' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  if (colorSchemeMeta) colorSchemeMeta.setAttribute('content', next);
+  if (themeColorMeta) themeColorMeta.setAttribute('content', next === 'light' ? '#f5f7fa' : '#080a0e');
+  if (themeToggle) {
+    const upcoming = next === 'light' ? 'dark' : 'light';
+    themeToggle.setAttribute('aria-label', `Switch to ${upcoming} theme`);
+    themeToggle.setAttribute('aria-pressed', String(next === 'light'));
+  }
+  if (persist) {
+    explicitTheme = next;
+    writeStoredTheme(next);
+  }
 }
 
+const storedTheme = readStoredTheme();
+if (storedTheme) explicitTheme = storedTheme;
+applyTheme(storedTheme || (lightPreferenceQuery.matches ? 'light' : 'dark'));
+
+themeToggle?.addEventListener('click', () => {
+  const current = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+  applyTheme(current === 'light' ? 'dark' : 'light', { persist: true });
+});
+
+const handleSystemThemeChange = (event) => {
+  if (explicitTheme) return;
+  applyTheme(event.matches ? 'light' : 'dark');
+};
+if (lightPreferenceQuery.addEventListener) lightPreferenceQuery.addEventListener('change', handleSystemThemeChange);
+else lightPreferenceQuery.addListener(handleSystemThemeChange);
+
+// ----------------------------
+// Smooth in-page navigation
+// ----------------------------
 function easeInOutQuart(t) {
   return t < 0.5 ? 8 * t * t * t * t : 1 - Math.pow(-2 * t + 2, 4) / 2;
 }
@@ -119,18 +143,15 @@ const syncHeader = () => header?.classList.toggle('scrolled', window.scrollY > 1
 syncHeader();
 window.addEventListener('scroll', syncHeader, { passive: true });
 
+// ----------------------------
+// Mobile navigation
+// ----------------------------
 menuToggle?.addEventListener('click', () => {
   const open = !navLinks?.classList.contains('open');
   navLinks?.classList.toggle('open', open);
   menuToggle.classList.toggle('open', open);
   menuToggle.setAttribute('aria-expanded', String(open));
 });
-
-navAnchors.forEach((link) => link.addEventListener('click', () => {
-  navLinks?.classList.remove('open');
-  menuToggle?.classList.remove('open');
-  menuToggle?.setAttribute('aria-expanded', 'false');
-}));
 
 function closeMobileMenu({ restoreFocus = false } = {}) {
   const wasOpen = navLinks?.classList.contains('open');
@@ -139,6 +160,8 @@ function closeMobileMenu({ restoreFocus = false } = {}) {
   menuToggle?.setAttribute('aria-expanded', 'false');
   if (restoreFocus && wasOpen) menuToggle?.focus();
 }
+
+navAnchors.forEach((link) => link.addEventListener('click', () => closeMobileMenu()));
 
 document.addEventListener('pointerdown', (event) => {
   if (!navLinks?.classList.contains('open')) return;
@@ -151,7 +174,6 @@ document.addEventListener('keydown', (event) => {
 });
 
 // Route every same-page hash link through one smooth-scrolling system.
-// This keeps the brand, nav, CTA links and footer navigation feeling identical.
 document.addEventListener('click', (event) => {
   const anchor = event.target.closest('a[href^="#"]');
   if (!anchor) return;
@@ -163,9 +185,7 @@ document.addEventListener('click', (event) => {
   if (!target) return;
 
   event.preventDefault();
-  navLinks?.classList.remove('open');
-  menuToggle?.classList.remove('open');
-  menuToggle?.setAttribute('aria-expanded', 'false');
+  closeMobileMenu();
   scrollToTarget(target);
 
   if (history.replaceState) history.replaceState(null, '', href);
@@ -175,9 +195,11 @@ $$('[data-scroll]').forEach((button) => {
   button.addEventListener('click', () => scrollToTarget(button.dataset.scroll));
 });
 
-const reduceMotion = reduceMotionQuery.matches;
+// ----------------------------
+// Reveal transitions
+// ----------------------------
 const revealItems = $$('.reveal');
-if ('IntersectionObserver' in window && !reduceMotion) {
+if ('IntersectionObserver' in window && !reduceMotionQuery.matches) {
   const revealObserver = new IntersectionObserver((entries) => {
     entries.forEach((entry) => {
       if (!entry.isIntersecting) return;
@@ -209,14 +231,6 @@ if ('IntersectionObserver' in window) {
   sections.forEach((section) => sectionObserver.observe(section));
 }
 
-if (isFinePointer && glow && !reduceMotion) {
-  window.addEventListener('mousemove', (event) => {
-    glow.style.left = `${event.clientX}px`;
-    glow.style.top = `${event.clientY}px`;
-    glow.style.opacity = '1';
-  }, { passive: true });
-}
-
 const yearNode = document.getElementById('year');
 if (yearNode) yearNode.textContent = new Date().getFullYear();
 const terminalDate = $('#terminal-date');
@@ -236,12 +250,12 @@ const terminalCommands = {
   help: () => [
     '<span class="term-output">Available commands:</span>',
     '<span class="term-output"><strong>whoami</strong>      developer profile</span>',
-    '<span class="term-output"><strong>projects</strong>    jump to public projects</span>',
+    '<span class="term-output"><strong>projects</strong>    jump to the flagship project</span>',
     '<span class="term-output"><strong>whatbroke</strong>   open the flagship Linux tool</span>',
     '<span class="term-output"><strong>story</strong>       why I built it</span>',
-    '<span class="term-output"><strong>skills</strong>      inspect technical stack</span>',
+    '<span class="term-output"><strong>skills</strong>      jump to capabilities</span>',
     '<span class="term-output"><strong>experience</strong>  professional timeline</span>',
-    '<span class="term-output"><strong>about</strong>       about / developer.json</span>',
+    '<span class="term-output"><strong>about</strong>       about me</span>',
     '<span class="term-output"><strong>movie</strong>       movie dashboard project</span>',
     '<span class="term-output"><strong>sql</strong>         NL → SQL project</span>',
     '<span class="term-output"><strong>pronunciation</strong> audio alignment project</span>',
@@ -252,7 +266,7 @@ const terminalCommands = {
   ],
   whoami: () => [
     '<span class="term-output">Karthik Saligram — Software Developer</span>',
-    '<span class="term-output muted-line">Backend · Cloud · Linux · Full-stack · Developer tooling</span>'
+    '<span class="term-output muted-line">Full-stack · Backend · Cloud · Systems</span>'
   ],
   projects: () => {
     setTimeout(() => scrollToTarget('#projects'), 180);
@@ -276,8 +290,8 @@ const terminalCommands = {
     ];
   },
   skills: () => {
-    setTimeout(() => scrollToTarget('#stack'), 180);
-    return ['<span class="term-output">Opening <strong>/stack</strong>...</span>'];
+    setTimeout(() => scrollToTarget('#capabilities'), 180);
+    return ['<span class="term-output">Opening <strong>/capabilities</strong>...</span>'];
   },
   stack: () => terminalCommands.skills(),
   experience: () => {
@@ -286,30 +300,18 @@ const terminalCommands = {
   },
   about: () => {
     setTimeout(() => scrollToTarget('#about'), 180);
-    return ['<span class="term-output">Opening <strong>developer.json</strong>...</span>'];
+    return ['<span class="term-output">Opening <strong>/about</strong>...</span>'];
   },
   movie: () => {
-    setTimeout(() => {
-      const target = $('#project-movie');
-      scrollToTarget(target);
-      window.setTimeout(() => pulseTarget(target), 480);
-    }, 160);
+    setTimeout(() => scrollToTarget('#project-movie'), 160);
     return ['<span class="term-output">Opening <strong>Movie Database Dashboard</strong>...</span>'];
   },
   sql: () => {
-    setTimeout(() => {
-      const target = $('#project-nlsql');
-      scrollToTarget(target);
-      window.setTimeout(() => pulseTarget(target), 480);
-    }, 160);
+    setTimeout(() => scrollToTarget('#project-nlsql'), 160);
     return ['<span class="term-output">Opening <strong>NL → SQL Translation Layer</strong>...</span>'];
   },
   pronunciation: () => {
-    setTimeout(() => {
-      const target = $('#project-pronunciation');
-      scrollToTarget(target);
-      window.setTimeout(() => pulseTarget(target), 480);
-    }, 160);
+    setTimeout(() => scrollToTarget('#project-pronunciation'), 160);
     return ['<span class="term-output">Opening <strong>Pronunciation Alignment Engine</strong>...</span>'];
   },
   contact: () => {
@@ -329,15 +331,7 @@ const terminalCommands = {
     return ['<span class="term-output">Opening résumé ↗</span>'];
   },
   pwd: () => ['<span class="term-output">/home/karthik/portfolio</span>'],
-  ls: () => ['<span class="term-output"><strong>projects/</strong> &nbsp; <strong>experience/</strong> &nbsp; <strong>stack/</strong> &nbsp; about.json &nbsp; resume.pdf</span>'],
-  orion: () => {
-    unlockConstellation('terminal');
-    return [
-      '<span class="term-output">background://orion <strong>unlocked</strong></span>',
-      '<span class="term-output muted-line">Some systems have undocumented features.</span>'
-    ];
-  },
-  stars: () => terminalCommands.orion(),
+  ls: () => ['<span class="term-output"><strong>projects/</strong> &nbsp; <strong>experience/</strong> &nbsp; <strong>capabilities/</strong> &nbsp; about &nbsp; resume.pdf</span>'],
   '?': () => terminalCommands.help(),
   clear: () => []
 };
@@ -425,125 +419,6 @@ $$('[data-terminal-command]').forEach((button) => {
 });
 
 // ----------------------------
-// Command palette
-// ----------------------------
-const palette = $('#command-palette');
-const paletteSearch = $('#palette-search');
-const paletteResults = $('#palette-results');
-const paletteTrigger = $('.palette-trigger');
-const paletteBackdrop = $('.palette-backdrop');
-let paletteSelection = 0;
-let palettePreviousFocus = null;
-
-const paletteActions = [
-  { icon: '01', label: 'View projects', description: 'Public projects and interactive demos', hint: 'projects', action: () => scrollToTarget('#projects') },
-  { icon: 'WB', label: 'Open What Broke?', description: 'Linux system-change forensics CLI', hint: 'flagship', action: () => scrollToTarget('#projects') },
-  { icon: '02', label: 'View experience', description: 'Professional engineering timeline', hint: 'work', action: () => scrollToTarget('#experience') },
-  { icon: '03', label: 'Inspect stack', description: 'Systems, backend, cloud, frontend, data', hint: 'skills', action: () => scrollToTarget('#stack') },
-  { icon: 'GH', label: 'Open GitHub', description: 'github.com/karthik-07', hint: '↗', action: () => window.open('https://github.com/karthik-07', '_blank', 'noopener,noreferrer') },
-  { icon: 'LI', label: 'Open LinkedIn', description: 'Professional profile', hint: '↗', action: () => window.open('https://www.linkedin.com/in/karthik-saligram-17968518b/', '_blank', 'noopener,noreferrer') },
-  { icon: 'CV', label: 'View résumé', description: 'Open current résumé PDF', hint: '↗', action: () => window.open('./assets/Karthik-Resume.pdf', '_blank', 'noopener,noreferrer') },
-  { icon: '@', label: 'Contact Karthik', description: 'karthikvs216@gmail.com', hint: 'email', action: () => { window.location.href = 'mailto:karthikvs216@gmail.com'; } }
-];
-
-function filteredPaletteActions() {
-  const query = (paletteSearch?.value || '').trim().toLowerCase();
-  if (!query) return paletteActions;
-  return paletteActions.filter((item) => `${item.label} ${item.description} ${item.hint}`.toLowerCase().includes(query));
-}
-
-function renderPalette() {
-  if (!paletteResults) return;
-  const items = filteredPaletteActions();
-  paletteSelection = Math.max(0, Math.min(paletteSelection, items.length - 1));
-  if (!items.length) {
-    paletteResults.innerHTML = '<div class="palette-empty">No matching command.</div>';
-    return;
-  }
-  paletteResults.innerHTML = items.map((item, index) => `
-    <button class="palette-item ${index === paletteSelection ? 'selected' : ''}" type="button" data-palette-index="${index}">
-      <span class="palette-icon">${item.icon}</span>
-      <span><strong>${item.label}</strong><small>${item.description}</small></span>
-      <span>${item.hint}</span>
-    </button>`).join('');
-
-  $$('[data-palette-index]', paletteResults).forEach((button) => {
-    button.addEventListener('click', () => executePaletteAction(Number(button.dataset.paletteIndex)));
-    button.addEventListener('mouseenter', () => {
-      paletteSelection = Number(button.dataset.paletteIndex);
-      renderPalette();
-    });
-  });
-}
-
-function openPalette() {
-  if (!palette) return;
-  palettePreviousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-  palette.classList.add('open');
-  palette.setAttribute('aria-hidden', 'false');
-  paletteTrigger?.setAttribute('aria-expanded', 'true');
-  document.body.classList.add('palette-open');
-  paletteSelection = 0;
-  if (paletteSearch) paletteSearch.value = '';
-  renderPalette();
-  requestAnimationFrame(() => paletteSearch?.focus());
-}
-
-function closePalette({ restoreFocus = true } = {}) {
-  if (!palette) return;
-  palette.classList.remove('open');
-  palette.setAttribute('aria-hidden', 'true');
-  paletteTrigger?.setAttribute('aria-expanded', 'false');
-  document.body.classList.remove('palette-open');
-  if (restoreFocus && palettePreviousFocus?.isConnected) palettePreviousFocus.focus();
-  palettePreviousFocus = null;
-}
-
-function executePaletteAction(index) {
-  const items = filteredPaletteActions();
-  const item = items[index];
-  if (!item) return;
-  closePalette();
-  setTimeout(item.action, 80);
-}
-
-paletteTrigger?.addEventListener('click', openPalette);
-paletteBackdrop?.addEventListener('click', closePalette);
-paletteSearch?.addEventListener('input', () => { paletteSelection = 0; renderPalette(); });
-paletteSearch?.addEventListener('keydown', (event) => {
-  const items = filteredPaletteActions();
-  if (event.key === 'ArrowDown') { event.preventDefault(); paletteSelection = Math.min(items.length - 1, paletteSelection + 1); renderPalette(); }
-  if (event.key === 'ArrowUp') { event.preventDefault(); paletteSelection = Math.max(0, paletteSelection - 1); renderPalette(); }
-  if (event.key === 'Enter') { event.preventDefault(); executePaletteAction(paletteSelection); }
-  if (event.key === 'Escape') closePalette();
-});
-
-palette?.addEventListener('keydown', (event) => {
-  if (event.key !== 'Tab' || !palette.classList.contains('open')) return;
-  const focusables = $$('input, button:not([disabled]), a[href], [tabindex]', palette)
-    .filter((node) => node.tabIndex >= 0 && !node.hasAttribute('hidden') && node.getClientRects().length);
-  if (!focusables.length) return;
-  const first = focusables[0];
-  const last = focusables[focusables.length - 1];
-  if (event.shiftKey && document.activeElement === first) {
-    event.preventDefault();
-    last.focus();
-  } else if (!event.shiftKey && document.activeElement === last) {
-    event.preventDefault();
-    first.focus();
-  }
-});
-
-document.addEventListener('keydown', (event) => {
-  if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
-    event.preventDefault();
-    palette?.classList.contains('open') ? closePalette() : openPalette();
-  } else if (event.key === 'Escape' && palette?.classList.contains('open')) {
-    closePalette();
-  }
-});
-
-// ----------------------------
 // What Broke? interactive demo
 // ----------------------------
 const wbDemo = $('#whatbroke-demo');
@@ -591,13 +466,39 @@ const wbScenarios = {
     },
     output: `<span class="term-label">NEWLY OBSERVED ERROR</span>\n<span class="term-strong">myapp: error while loading shared libraries</span>\n\ncurrent boot      <span class="term-good">6 occurrences</span>\nprevious boots    <span class="term-good">0 occurrences</span>\n\n<span class="term-label">PRECEDING CHANGES</span>\nopenssl           upgraded\nglibc             upgraded\nca-certificates   upgraded\n\n<span class="term-note">A starting point for investigation.</span>`
   }
-}
+};
 let currentScenario = 'wifi';
 let wbTimers = [];
 
 function clearWbTimers() {
   wbTimers.forEach(window.clearTimeout);
   wbTimers = [];
+}
+
+function activateRovingTab(tabs, activeTab, panel) {
+  tabs.forEach((tab) => {
+    const active = tab === activeTab;
+    tab.tabIndex = active ? 0 : -1;
+    tab.setAttribute('aria-selected', String(active));
+  });
+  if (panel && activeTab?.id) panel.setAttribute('aria-labelledby', activeTab.id);
+}
+
+function wireRovingTabKeyboard(tabs) {
+  tabs.forEach((tab, index) => {
+    tab.addEventListener('keydown', (event) => {
+      if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.key)) return;
+      event.preventDefault();
+      let nextIndex = index;
+      if (event.key === 'Home') nextIndex = 0;
+      else if (event.key === 'End') nextIndex = tabs.length - 1;
+      else if (event.key === 'ArrowRight' || event.key === 'ArrowDown') nextIndex = (index + 1) % tabs.length;
+      else nextIndex = (index - 1 + tabs.length) % tabs.length;
+      const next = tabs[nextIndex];
+      next?.focus();
+      next?.click();
+    });
+  });
 }
 
 function inspectWbEvent(eventKey, { focus = false } = {}) {
@@ -790,131 +691,6 @@ movieSearch?.addEventListener('input', () => {
 movieResults.forEach((result) => result.addEventListener('click', () => selectMovie(result.dataset.movie)));
 
 // ----------------------------
-// Experience timeline — mirrors current resume
-// ----------------------------
-const experienceData = {
-  orbmedic: {
-    period: 'JULY 2025 — PRESENT', location: 'OTTAWA, ON', title: 'Full Stack Developer', company: 'Orbmedic',
-    bullets: [
-      'Owned end-to-end development and beta readiness of a wearable-health platform spanning backend ingestion, physiological signal processing, web interfaces, and mobile applications.',
-      'Designed backend data pipelines for ingesting and processing ECG, PPG, HRV, and other wearable sensor data, including integration with third-party ECG hardware producing 1 kHz signal streams.',
-      'Developed algorithms for establishing longitudinal physiological baselines and identifying deviations in wearable sensor data.',
-      'Developed clinician-facing interfaces using React/Next.js and Flutter mobile and smartwatch applications for physiological data collection and visualization.',
-      'Worked with containerized backend services using Docker, Celery, MongoDB, Redis, and Nginx to support production deployment and application processing workflows.'
-    ],
-    tags: ['React / Next.js', 'Flutter', 'Docker', 'Celery', 'MongoDB', 'Redis', 'Nginx']
-  },
-  fairwinds: {
-    period: 'APRIL 2025 — MARCH 2026', location: 'OTTAWA, ON', title: 'Full Stack Developer', company: 'Fair Winds Analytics',
-    bullets: [
-      'Developed full-stack applications using React/Next.js with backend services in Python and Node.js.',
-      'Designed RESTful APIs for data storage, retrieval, and third-party integrations using OpenAPI standards.',
-      'Built production features using PostgreSQL, Docker, authentication services, and cloud-based application infrastructure.',
-      'Deployed frontend and backend services on AWS and implemented GitLab CI/CD pipelines for automated deployment workflows.'
-    ],
-    tags: ['React / Next.js', 'Python', 'Node.js', 'OpenAPI', 'PostgreSQL', 'Docker', 'AWS', 'GitLab CI/CD']
-  },
-  manipal: {
-    period: 'SEPTEMBER 2021 — AUGUST 2022', location: 'KARNATAKA, INDIA', title: 'Full Stack Developer', company: 'Manipal School of Information Sciences',
-    bullets: [
-      'Built an internal ASP.NET and SQL academic performance and research management platform for MAHE, used by department heads and research faculty to track grants, research activity, and PhD supervision.',
-      'Developed a points-based evaluation system using research outcomes, grant status, and PhD supervision metrics to support faculty performance, promotion, tenure, and compensation reviews.',
-      'Implemented authentication, authorization, and SQL-backed data workflows for internal faculty and administrative users.'
-    ],
-    tags: ['ASP.NET', 'SQL', 'Authentication', 'Authorization']
-  }
-};
-
-const expTabs = $$('.timeline-tab');
-const expNodes = {
-  period: $('#exp-period'), location: $('#exp-location'), title: $('#exp-title'), company: $('#exp-company'), bullets: $('#exp-bullets'), tags: $('#exp-tags')
-};
-function renderExperience(key) {
-  const data = experienceData[key];
-  if (!data) return;
-  if (expNodes.period) expNodes.period.textContent = data.period;
-  if (expNodes.location) expNodes.location.textContent = data.location;
-  if (expNodes.title) expNodes.title.textContent = data.title;
-  if (expNodes.company) expNodes.company.textContent = data.company;
-  if (expNodes.bullets) expNodes.bullets.innerHTML = data.bullets.map((item) => `<li>${item}</li>`).join('');
-  if (expNodes.tags) expNodes.tags.innerHTML = data.tags.map((item) => `<span>${item}</span>`).join('');
-  const activeTab = expTabs.find((tab) => tab.dataset.exp === key);
-  expTabs.forEach((tab) => tab.classList.toggle('active', tab === activeTab));
-  activateRovingTab(expTabs, activeTab, $('#experience-panel'));
-}
-wireRovingTabKeyboard(expTabs);
-expTabs.forEach((tab) => tab.addEventListener('click', () => renderExperience(tab.dataset.exp)));
-
-// ----------------------------
-// Interactive stack
-// ----------------------------
-const stackData = {
-  systems: {
-    label: 'SYSTEMS', title: 'I like knowing what the machine is actually doing.',
-    description: 'Linux is my daily environment. My resume stack includes Arch Linux, systemd, Docker, and Nginx alongside backend and cloud tooling.',
-    tools: ['Linux', 'Arch Linux', 'systemd', 'Docker', 'Nginx'], projects: [{ label: 'What Broke?', target: '#project-whatbroke' }], tags: ['linux', 'systems']
-  },
-  backend: {
-    label: 'BACKEND', title: 'APIs, workers, and the logic behind the interface.',
-    description: 'My current resume highlights Python, JavaScript / Node.js, REST APIs, OpenAPI, Celery, and ASP.NET across backend and full-stack work.',
-    tools: ['Python', 'Node.js', 'REST APIs', 'OpenAPI', 'Celery', 'ASP.NET'], projects: [{ label: 'NL → SQL', target: '#project-nlsql' }, { label: 'What Broke?', target: '#project-whatbroke' }], tags: ['backend', 'python']
-  },
-  cloud: {
-    label: 'CLOUD & DEVOPS', title: 'Ship it, automate it, know where it runs.',
-    description: 'AWS, Azure, Docker, GitLab CI/CD, Git, and GitHub are the cloud and delivery tools listed on my current resume.',
-    tools: ['AWS', 'Azure', 'Docker', 'GitLab CI/CD', 'Git', 'GitHub'], projects: [{ label: 'Professional experience', target: '#experience' }], tags: ['cloud']
-  },
-  frontend: {
-    label: 'FRAMEWORKS', title: 'Interfaces are useful when they make the system easier to understand.',
-    description: 'React, Next.js, Flutter, and ASP.NET are the application frameworks on my current resume, backed by JavaScript, Dart, and C#.',
-    tools: ['React', 'Next.js', 'Flutter', 'JavaScript', 'Dart', 'C#'], projects: [{ label: 'Movie Dashboard', target: '#project-movie' }], tags: ['frontend', 'javascript']
-  },
-  data: {
-    label: 'DATABASES & DATA', title: 'Structure first, then query it cleanly.',
-    description: 'PostgreSQL, MongoDB, Redis, and SQL are the data technologies listed on my current resume.',
-    tools: ['PostgreSQL', 'MongoDB', 'Redis', 'SQL'], projects: [{ label: 'NL → SQL', target: '#project-nlsql' }], tags: ['data', 'sql']
-  }
-};
-
-const stackTabs = $$('.stack-tab');
-const stackLabel = $('#stack-label');
-const stackTitle = $('#stack-title');
-const stackDescription = $('#stack-description');
-const stackNodes = $('#stack-nodes');
-const stackProjects = $('#stack-projects');
-const projectCards = $$('[data-project]');
-
-function renderStack(key) {
-  const data = stackData[key];
-  if (!data) return;
-  stackLabel.textContent = data.label;
-  stackTitle.textContent = data.title;
-  stackDescription.textContent = data.description;
-  stackNodes.innerHTML = data.tools.map((tool) => `<button type="button" data-tool="${tool.replace(/"/g, '&quot;')}">${tool}</button>`).join('');
-  $$('[data-tool]', stackNodes).forEach((button) => button.addEventListener('click', () => {
-    $$('[data-tool]', stackNodes).forEach((item) => item.classList.toggle('active-tool', item === button));
-    showToast(`${button.dataset.tool} · ${data.label.toLowerCase()} stack`);
-  }));
-  stackProjects.innerHTML = data.projects.map((project) => `<button type="button" data-project-target="${project.target}">${project.label}</button>`).join('');
-  $$('[data-project-target]', stackProjects).forEach((button) => button.addEventListener('click', () => {
-    const target = $(button.dataset.projectTarget);
-    scrollToTarget(target);
-    window.setTimeout(() => pulseTarget(target), 460);
-  }));
-  const activeTab = stackTabs.find((tab) => tab.dataset.stack === key);
-  stackTabs.forEach((tab) => tab.classList.toggle('active', tab === activeTab));
-  activateRovingTab(stackTabs, activeTab, $('#stack-view'));
-  projectCards.forEach((card) => {
-    const tags = (card.dataset.tags || '').split(' ');
-    const relevant = data.tags.some((tag) => tags.includes(tag));
-    card.classList.toggle('project-dimmed', !relevant);
-  });
-  window.setTimeout(() => projectCards.forEach((card) => card.classList.remove('project-dimmed')), 2200);
-}
-wireRovingTabKeyboard(stackTabs);
-stackTabs.forEach((tab) => tab.addEventListener('click', () => renderStack(tab.dataset.stack)));
-
-// ----------------------------
 // Copy email
 // ----------------------------
 $$('.copy-email').forEach((button) => {
@@ -930,7 +706,7 @@ $$('.copy-email').forEach((button) => {
 });
 
 // ----------------------------
-// Motion system + ambient background
+// Scroll progress
 // ----------------------------
 const scrollProgressBar = $('#scroll-progress-bar');
 let scrollTicking = false;
@@ -950,238 +726,88 @@ window.addEventListener('scroll', () => {
 }, { passive: true });
 updateScrollProgress();
 
-// Card-level interaction: clicking/focusing the body of a project card gives it a persistent selected state.
-const interactiveProjectCards = $$('.interactive-project-card');
-function toggleProjectCard(card) {
-  interactiveProjectCards.forEach((item) => {
-    if (item !== card) item.classList.remove('card-selected');
-  });
-  card.classList.toggle('card-selected');
-}
-interactiveProjectCards.forEach((card) => {
-  card.addEventListener('click', (event) => {
-    if (event.target.closest('a, button, input, textarea, select')) return;
-    toggleProjectCard(card);
-  });
-  card.addEventListener('keydown', (event) => {
-    if (event.target !== card || !['Enter', ' '].includes(event.key)) return;
-    event.preventDefault();
-    toggleProjectCard(card);
-  });
-});
-
-// Cursor-following 3D response across every major portfolio card.
-if (window.matchMedia('(hover: hover) and (pointer: fine)').matches && !reduceMotion) {
-  const tiltSurfaces = $$('.hero-terminal, .interactive-project-card, .experience-shell, .stack-console, .about-terminal, .contact-panel');
-
-  const getTiltStrength = (surface) => {
-    if (surface.classList.contains('hero-terminal')) return 3.8;
-    if (surface.classList.contains('flagship')) return 3.4;
-    if (surface.classList.contains('lab-card')) return 4.6;
-    if (surface.classList.contains('about-terminal')) return 3.2;
-    if (surface.classList.contains('stack-console')) return 2.8;
-    if (surface.classList.contains('experience-shell')) return 2.5;
-    return 2.2;
-  };
-
-  tiltSurfaces.forEach((surface) => {
-    surface.classList.add('motion-surface');
-    let frame = 0;
-
-    surface.addEventListener('pointermove', (event) => {
-      const clientX = event.clientX;
-      const clientY = event.clientY;
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
-        const rect = surface.getBoundingClientRect();
-        if (!rect.width || !rect.height) return;
-        const x = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-        const y = Math.max(0, Math.min(1, (clientY - rect.top) / rect.height));
-        const maxTilt = getTiltStrength(surface);
-        const ry = (x - 0.5) * maxTilt * 2;
-        const rx = (0.5 - y) * maxTilt * 2;
-        const px = (x - 0.5) * 8;
-        const py = (y - 0.5) * 8;
-
-        surface.style.setProperty('--rx', `${rx.toFixed(2)}deg`);
-        surface.style.setProperty('--ry', `${ry.toFixed(2)}deg`);
-        surface.style.setProperty('--mx', `${(x * 100).toFixed(1)}%`);
-        surface.style.setProperty('--my', `${(y * 100).toFixed(1)}%`);
-        surface.style.setProperty('--parallax-x', `${px.toFixed(2)}px`);
-        surface.style.setProperty('--parallax-y', `${py.toFixed(2)}px`);
-        surface.style.setProperty('--parallax-x-neg', `${(-px * 0.72).toFixed(2)}px`);
-        surface.style.setProperty('--parallax-y-neg', `${(-py * 0.72).toFixed(2)}px`);
-        surface.classList.add('is-hovered');
-      });
-    }, { passive: true });
-
-    surface.addEventListener('pointerleave', () => {
-      cancelAnimationFrame(frame);
-      surface.style.setProperty('--rx', '0deg');
-      surface.style.setProperty('--ry', '0deg');
-      surface.style.setProperty('--mx', '50%');
-      surface.style.setProperty('--my', '50%');
-      surface.style.setProperty('--parallax-x', '0px');
-      surface.style.setProperty('--parallax-y', '0px');
-      surface.style.setProperty('--parallax-x-neg', '0px');
-      surface.style.setProperty('--parallax-y-neg', '0px');
-      surface.classList.remove('is-hovered');
-    });
-  });
-
-  // Small magnetic pull on high-intent controls. Movement is intentionally restrained.
-  const magneticElements = $$('.button, .key-button, .nav-cta, .terminal-shortcuts button, .scenario-tab, .stack-tab');
-  magneticElements.forEach((element) => {
-    element.classList.add('magnetic');
-    element.addEventListener('pointermove', (event) => {
-      const rect = element.getBoundingClientRect();
-      const dx = event.clientX - (rect.left + rect.width / 2);
-      const dy = event.clientY - (rect.top + rect.height / 2);
-      element.style.setProperty('--mag-x', `${(dx * 0.085).toFixed(1)}px`);
-      element.style.setProperty('--mag-y', `${(dy * 0.11).toFixed(1)}px`);
-      element.classList.add('is-magnetized');
-    }, { passive: true });
-    element.addEventListener('pointerleave', () => {
-      element.style.setProperty('--mag-x', '0px');
-      element.style.setProperty('--mag-y', '0px');
-      element.classList.remove('is-magnetized');
-    });
-  });
-}
-
-// Lightweight canvas network: decorative only, no libraries and no background worker.
-// It reacts to the pointer, supports click ripples, and contains one intentionally undocumented easter egg.
-let constellationUnlocked = false;
-let constellationToastShown = false;
-
-function unlockConstellation(source = 'pointer') {
-  constellationUnlocked = true;
-  if (!constellationToastShown) {
-    constellationToastShown = true;
-    showToast(source === 'terminal' ? 'Orion unlocked.' : 'Easter egg found: Orion');
-  }
-}
-
+// ----------------------------
+// Ambient background — low-density, non-interactive stars
+// ----------------------------
 const ambientCanvas = $('#ambient-canvas');
-if (ambientCanvas && !reduceMotion) {
+if (ambientCanvas && !reduceMotionQuery.matches) {
   const ctx = ambientCanvas.getContext('2d', { alpha: true });
   if (!ctx) {
     ambientCanvas.classList.add('canvas-unavailable');
   } else {
-    const pointer = {
-      x: -9999,
-      y: -9999,
-      lastX: -9999,
-      lastY: -9999,
-      vx: 0,
-      vy: 0,
-      active: false
-    };
+    // Star colours are read from CSS custom properties so the field follows the theme.
+    let skyPalette = {};
+    function readSkyPalette() {
+      const styles = getComputedStyle(document.documentElement);
+      const read = (name, fallback) => styles.getPropertyValue(name).trim() || fallback;
+      skyPalette = {
+        star1: read('--sky-star-1', '110,220,255'),
+        star2: read('--sky-star-2', '114,246,177'),
+        solid1: read('--sky-star-solid-1', '150,229,255'),
+        solid2: read('--sky-star-solid-2', '166,255,209')
+      };
+    }
+    readSkyPalette();
 
-    let particles = [];
-    let ripples = [];
-    let driftStars = [];
+    // Re-read the palette when the theme changes so the field stays visible.
+    const themeObserver = new MutationObserver(readSkyPalette);
+    themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+    const saveData = Boolean(navigator.connection?.saveData);
+    const lowPowerDevice = (navigator.hardwareConcurrency || 8) <= 4;
+    let stars = [];
     let shootingStars = [];
-    let nextShootingStarAt = performance.now() + 4200;
+    let nextShootingStarAt = performance.now() + 6000 + Math.random() * 6000;
     let canvasWidth = 0;
     let canvasHeight = 0;
     let canvasDpr = 1;
     let ambientFrame = 0;
     let ambientRunning = true;
-    let constellationReveal = 0;
-    let constellationHoverStartedAt = 0;
-    let pointerTrail = [];
     let lastAmbientDraw = 0;
-    const saveData = Boolean(navigator.connection?.saveData);
-    const lowPowerDevice = (navigator.hardwareConcurrency || 8) <= 4;
 
-    const orion = {
-      name: 'ORION',
-      stars: [
-        { x: -0.28, y: -0.32, r: 2.15 },
-        { x:  0.25, y: -0.30, r: 1.75 },
-        { x: -0.14, y: -0.02, r: 1.45 },
-        { x:  0.00, y:  0.00, r: 1.55 },
-        { x:  0.15, y:  0.02, r: 1.42 },
-        { x: -0.23, y:  0.36, r: 1.70 },
-        { x:  0.29, y:  0.39, r: 2.00 }
-      ],
-      edges: [[0, 2], [1, 4], [2, 3], [3, 4], [2, 5], [4, 6]]
-    };
+    function starCount() {
+      const constrained = saveData || lowPowerDevice;
+      if (canvasWidth < 600) return constrained ? 16 : 24;
+      if (canvasWidth < 1000) return constrained ? 24 : 38;
+      return constrained ? 32 : 56;
+    }
 
-    const particleCount = () => {
-      const multiplier = saveData ? 0.55 : lowPowerDevice ? 0.78 : 1;
-      const base = window.innerWidth < 600 ? 34 : window.innerWidth < 1000 ? 54 : 82;
-      return Math.max(24, Math.round(base * multiplier));
-    };
-
-    function makeParticle() {
-      const cyan = Math.random() > 0.58;
+    function makeStar() {
       return {
         x: Math.random() * Math.max(1, canvasWidth),
         y: Math.random() * Math.max(1, canvasHeight),
-        vx: (Math.random() - 0.5) * 0.13,
-        vy: (Math.random() - 0.5) * 0.13,
-        size: 1.05 + Math.random() * 1.35,
-        alpha: 0.42 + Math.random() * 0.28,
-        cyan
-      };
-    }
-
-    function getOrionGeometry(now = performance.now()) {
-      const compact = canvasWidth < 760;
-      const scale = compact ? Math.min(105, canvasWidth * 0.18) : Math.min(155, canvasWidth * 0.11);
-      const driftX = Math.sin(now / 9000) * 7;
-      const driftY = Math.cos(now / 11000) * 5;
-      const centerX = (compact ? canvasWidth * 0.74 : canvasWidth * 0.82) + driftX;
-      const centerY = (compact ? canvasHeight * 0.30 : canvasHeight * 0.34) + driftY;
-      const stars = orion.stars.map((star) => ({
-        x: centerX + star.x * scale * 2,
-        y: centerY + star.y * scale * 2,
-        r: star.r
-      }));
-      return { centerX, centerY, scale, stars };
-    }
-
-    function makeDriftStar() {
-      const speed = 0.035 + Math.random() * 0.11;
-      const angle = -0.22 + Math.random() * 0.44;
-      return {
-        x: Math.random() * Math.max(1, canvasWidth),
-        y: Math.random() * Math.max(1, canvasHeight),
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed + (Math.random() - 0.5) * 0.035,
-        size: 0.65 + Math.random() * 1.25,
+        vx: (Math.random() - 0.5) * 0.09,
+        vy: (Math.random() - 0.5) * 0.09,
+        size: 0.7 + Math.random() * 1.2,
         phase: Math.random() * Math.PI * 2,
         cyan: Math.random() > 0.5
       };
     }
 
-    function resetDriftStars() {
-      const count = canvasWidth < 760 ? 8 : (lowPowerDevice || saveData ? 10 : 18);
-      driftStars = Array.from({ length: count }, makeDriftStar);
+    function resetStars() {
+      stars = Array.from({ length: starCount() }, makeStar);
     }
 
     function spawnShootingStar(now) {
-      if (reduceMotion || saveData || lowPowerDevice || canvasWidth < 720) return;
+      if (saveData || lowPowerDevice || canvasWidth < 720) return;
       const fromTop = Math.random() > 0.45;
-      const speed = 4.8 + Math.random() * 2.7;
+      const speed = 4.6 + Math.random() * 2.6;
       const angle = 0.42 + Math.random() * 0.24;
       shootingStars.push({
-        x: fromTop ? Math.random() * canvasWidth * 0.72 : -40,
-        y: fromTop ? -30 : Math.random() * canvasHeight * 0.45,
+        x: fromTop ? Math.random() * canvasWidth * 0.7 : -40,
+        y: fromTop ? -30 : Math.random() * canvasHeight * 0.4,
         vx: Math.cos(angle) * speed,
         vy: Math.sin(angle) * speed,
         life: 0,
         maxLife: 95 + Math.random() * 45,
         length: 50 + Math.random() * 55
       });
-      if (shootingStars.length > 2) shootingStars.shift();
-      nextShootingStarAt = now + 6200 + Math.random() * 6500;
+      if (shootingStars.length > 1) shootingStars.shift();
+      nextShootingStarAt = now + 9000 + Math.random() * 9000;
     }
 
-    function drawMovingStars(now) {
-      driftStars.forEach((star, index) => {
+    function drawStars(now) {
+      stars.forEach((star, index) => {
         star.x += star.vx;
         star.y += star.vy;
         if (star.x > canvasWidth + 20) star.x = -20;
@@ -1189,24 +815,12 @@ if (ambientCanvas && !reduceMotion) {
         if (star.y > canvasHeight + 20) star.y = -20;
         if (star.y < -20) star.y = canvasHeight + 20;
 
-        const twinkle = 0.35 + (Math.sin(now / 620 + star.phase + index * 0.31) + 1) * 0.24;
-        const pointerBoost = pointer.active ? Math.max(0, 1 - Math.hypot(pointer.x - star.x, pointer.y - star.y) / 180) : 0;
-        const alpha = Math.min(0.95, twinkle + pointerBoost * 0.38);
-        const radius = star.size + pointerBoost * 0.75;
-
-        if (radius > 1.15) {
-          const halo = ctx.createRadialGradient(star.x, star.y, 0, star.x, star.y, radius * 5);
-          halo.addColorStop(0, star.cyan ? `rgba(110,220,255,${alpha * 0.22})` : `rgba(114,246,177,${alpha * 0.20})`);
-          halo.addColorStop(1, 'rgba(0,0,0,0)');
-          ctx.fillStyle = halo;
-          ctx.beginPath();
-          ctx.arc(star.x, star.y, radius * 5, 0, Math.PI * 2);
-          ctx.fill();
-        }
-
+        const twinkle = 0.4 + (Math.sin(now / 720 + star.phase + index * 0.31) + 1) * 0.26;
         ctx.beginPath();
-        ctx.arc(star.x, star.y, radius, 0, Math.PI * 2);
-        ctx.fillStyle = star.cyan ? `rgba(150,229,255,${alpha})` : `rgba(166,255,209,${alpha})`;
+        ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+        ctx.fillStyle = star.cyan
+          ? `rgba(${skyPalette.solid1},${twinkle})`
+          : `rgba(${skyPalette.solid2},${twinkle})`;
         ctx.fill();
       });
 
@@ -1217,19 +831,18 @@ if (ambientCanvas && !reduceMotion) {
         star.y += star.vy;
         const lifeRatio = star.life / star.maxLife;
         if (lifeRatio >= 1 || star.x > canvasWidth + 120 || star.y > canvasHeight + 120) return false;
-        const alpha = Math.sin(Math.min(1, lifeRatio) * Math.PI) * 0.62;
+        const alpha = Math.sin(Math.min(1, lifeRatio) * Math.PI) * 0.6;
         const magnitude = Math.max(0.001, Math.hypot(star.vx, star.vy));
         const tailX = star.x - (star.vx / magnitude) * star.length;
         const tailY = star.y - (star.vy / magnitude) * star.length;
         const gradient = ctx.createLinearGradient(tailX, tailY, star.x, star.y);
-        gradient.addColorStop(0, 'rgba(110,220,255,0)');
-        gradient.addColorStop(0.72, `rgba(110,220,255,${alpha * 0.28})`);
-        gradient.addColorStop(1, `rgba(225,249,255,${alpha})`);
+        gradient.addColorStop(0, `rgba(${skyPalette.star1},0)`);
+        gradient.addColorStop(1, `rgba(${skyPalette.solid1},${alpha})`);
         ctx.beginPath();
         ctx.moveTo(tailX, tailY);
         ctx.lineTo(star.x, star.y);
         ctx.strokeStyle = gradient;
-        ctx.lineWidth = 1.15;
+        ctx.lineWidth = 1.1;
         ctx.stroke();
         return true;
       });
@@ -1244,292 +857,23 @@ if (ambientCanvas && !reduceMotion) {
       ambientCanvas.style.width = `${canvasWidth}px`;
       ambientCanvas.style.height = `${canvasHeight}px`;
       ctx.setTransform(canvasDpr, 0, 0, canvasDpr, 0, 0);
-
-      const desired = particleCount();
-      if (particles.length > desired) particles = particles.slice(0, desired);
-      while (particles.length < desired) particles.push(makeParticle());
-      resetDriftStars();
+      resetStars();
       shootingStars = [];
-      nextShootingStarAt = performance.now() + 3600 + Math.random() * 3200;
-    }
-
-    function drawRipple(ripple, now) {
-      const elapsed = now - ripple.startedAt;
-      const life = Math.min(1, elapsed / ripple.duration);
-      const eased = 1 - Math.pow(1 - life, 3);
-      ripple.radius = 18 + eased * ripple.maxRadius;
-      const alpha = (1 - life) * 0.30;
-
-      ctx.beginPath();
-      ctx.arc(ripple.x, ripple.y, ripple.radius, 0, Math.PI * 2);
-      ctx.strokeStyle = `rgba(110,220,255,${alpha})`;
-      ctx.lineWidth = 1.2;
-      ctx.stroke();
-
-      ctx.beginPath();
-      ctx.arc(ripple.x, ripple.y, ripple.radius * 0.72, 0, Math.PI * 2);
-      ctx.strokeStyle = `rgba(114,246,177,${alpha * 0.45})`;
-      ctx.lineWidth = 0.7;
-      ctx.stroke();
-    }
-
-    function applyRippleForce(particle, ripple) {
-      const dx = particle.x - ripple.x;
-      const dy = particle.y - ripple.y;
-      const distance = Math.hypot(dx, dy);
-      if (distance < 1) return;
-      const ringDistance = Math.abs(distance - ripple.radius);
-      if (ringDistance > 46) return;
-      const force = (1 - ringDistance / 46) * 0.010;
-      particle.vx += (dx / distance) * force;
-      particle.vy += (dy / distance) * force;
-    }
-
-    function drawOrion(now) {
-      const geometry = getOrionGeometry(now);
-      const distanceToCenter = pointer.active
-        ? Math.hypot(pointer.x - geometry.centerX, pointer.y - geometry.centerY)
-        : Infinity;
-      const secretRadius = Math.max(145, geometry.scale * 1.32);
-      const insideSecretZone = distanceToCenter < secretRadius;
-
-      if (insideSecretZone && !constellationUnlocked) {
-        if (!constellationHoverStartedAt) constellationHoverStartedAt = now;
-        if (now - constellationHoverStartedAt > 920) unlockConstellation('pointer');
-      } else if (!constellationUnlocked) {
-        constellationHoverStartedAt = 0;
-      }
-
-      let target = constellationUnlocked ? 0.92 : 0.015;
-      if (insideSecretZone && !constellationUnlocked) {
-        const proximity = 1 - Math.min(1, distanceToCenter / secretRadius);
-        const linger = constellationHoverStartedAt
-          ? Math.min(1, (now - constellationHoverStartedAt) / 920)
-          : 0;
-        target = 0.08 + proximity * 0.42 + linger * 0.38;
-      }
-      constellationReveal += (target - constellationReveal) * 0.055;
-
-      const starAlpha = 0.08 + constellationReveal * 0.82;
-      const lineAlpha = Math.max(0, constellationReveal - 0.12) * 0.42;
-
-      orion.edges.forEach(([a, b]) => {
-        const s1 = geometry.stars[a];
-        const s2 = geometry.stars[b];
-        ctx.beginPath();
-        ctx.moveTo(s1.x, s1.y);
-        ctx.lineTo(s2.x, s2.y);
-        ctx.strokeStyle = `rgba(151,220,220,${lineAlpha})`;
-        ctx.lineWidth = constellationUnlocked ? 1.05 : 0.75;
-        ctx.stroke();
-      });
-
-      geometry.stars.forEach((star, index) => {
-        const pulse = 1 + Math.sin(now / 700 + index * 0.9) * 0.12 * constellationReveal;
-        const radius = star.r * pulse;
-
-        if (constellationReveal > 0.18) {
-          const halo = ctx.createRadialGradient(star.x, star.y, 0, star.x, star.y, radius * 5.5);
-          halo.addColorStop(0, `rgba(180,240,226,${0.11 * constellationReveal})`);
-          halo.addColorStop(1, 'rgba(180,240,226,0)');
-          ctx.fillStyle = halo;
-          ctx.beginPath();
-          ctx.arc(star.x, star.y, radius * 5.5, 0, Math.PI * 2);
-          ctx.fill();
-        }
-
-        ctx.beginPath();
-        ctx.arc(star.x, star.y, radius, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(190,244,232,${starAlpha})`;
-        ctx.fill();
-      });
-
-      if (constellationUnlocked && constellationReveal > 0.56) {
-        ctx.save();
-        ctx.globalAlpha = Math.min(0.58, (constellationReveal - 0.45) * 1.2);
-        ctx.font = '500 9px "JetBrains Mono", monospace';
-        ctx.fillStyle = 'rgba(166,220,212,.82)';
-        ctx.fillText('ORION // EASTER EGG', geometry.centerX - geometry.scale * 0.62, geometry.centerY + geometry.scale * 0.96);
-        ctx.restore();
-      }
+      nextShootingStarAt = performance.now() + 6000 + Math.random() * 6000;
     }
 
     function drawAmbientFrame(now = performance.now()) {
       if (!ambientRunning) return;
-      const targetFps = (window.innerWidth < 760 || saveData || lowPowerDevice) ? 30 : 60;
-      const minFrameTime = 1000 / targetFps;
+      const minFrameTime = 1000 / 30;
       if (now - lastAmbientDraw < minFrameTime) {
         ambientFrame = requestAnimationFrame(drawAmbientFrame);
         return;
       }
       lastAmbientDraw = now;
       ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-
-      ripples = ripples.filter((ripple) => {
-        const elapsed = now - ripple.startedAt;
-        const life = Math.min(1, elapsed / ripple.duration);
-        const eased = 1 - Math.pow(1 - life, 3);
-        ripple.radius = 18 + eased * ripple.maxRadius;
-        return life < 1;
-      });
-
-      for (let i = 0; i < particles.length; i += 1) {
-        const p = particles[i];
-
-        if (pointer.active) {
-          const dx = pointer.x - p.x;
-          const dy = pointer.y - p.y;
-          const distance = Math.hypot(dx, dy);
-          if (distance < 270 && distance > 1) {
-            const force = (270 - distance) / 270;
-            p.vx += (dx / distance) * force * 0.0026;
-            p.vy += (dy / distance) * force * 0.0026;
-            const cursorSpeed = Math.min(14, Math.hypot(pointer.vx, pointer.vy));
-            if (cursorSpeed > 0.5) {
-              p.vx += (-dy / distance) * force * cursorSpeed * 0.00007;
-              p.vy += ( dx / distance) * force * cursorSpeed * 0.00007;
-            }
-          }
-        }
-
-        for (const ripple of ripples) applyRippleForce(p, ripple);
-
-        p.vx *= 0.992;
-        p.vy *= 0.992;
-        const speed = Math.hypot(p.vx, p.vy);
-        if (speed > 0.46) {
-          p.vx = (p.vx / speed) * 0.46;
-          p.vy = (p.vy / speed) * 0.46;
-        }
-        p.x += p.vx;
-        p.y += p.vy;
-
-        if (p.x < -10) p.x = canvasWidth + 10;
-        if (p.x > canvasWidth + 10) p.x = -10;
-        if (p.y < -10) p.y = canvasHeight + 10;
-        if (p.y > canvasHeight + 10) p.y = -10;
-
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fillStyle = p.cyan
-          ? `rgba(110,220,255,${p.alpha})`
-          : `rgba(114,246,177,${p.alpha})`;
-        ctx.fill();
-
-        for (let j = i + 1; j < particles.length; j += 1) {
-          const q = particles[j];
-          const dx = p.x - q.x;
-          const dy = p.y - q.y;
-          const distanceSq = dx * dx + dy * dy;
-          const maxDistance = 168;
-          if (distanceSq > maxDistance * maxDistance) continue;
-          const distance = Math.sqrt(distanceSq);
-          const alpha = (1 - distance / maxDistance) * 0.22;
-          ctx.beginPath();
-          ctx.moveTo(p.x, p.y);
-          ctx.lineTo(q.x, q.y);
-          ctx.strokeStyle = `rgba(136,205,211,${alpha})`;
-          ctx.lineWidth = 0.9;
-          ctx.stroke();
-        }
-      }
-
-      ripples.forEach((ripple) => drawRipple(ripple, now));
-
-      if (pointer.active) {
-        for (const p of particles) {
-          const dx = pointer.x - p.x;
-          const dy = pointer.y - p.y;
-          const distance = Math.hypot(dx, dy);
-          if (distance < 230) {
-            const alpha = (1 - distance / 230) * 0.31;
-            ctx.beginPath();
-            ctx.moveTo(pointer.x, pointer.y);
-            ctx.lineTo(p.x, p.y);
-            ctx.strokeStyle = `rgba(110,220,255,${alpha})`;
-            ctx.lineWidth = 0.8;
-            ctx.stroke();
-          }
-        }
-
-        const halo = ctx.createRadialGradient(pointer.x, pointer.y, 0, pointer.x, pointer.y, 195);
-        halo.addColorStop(0, 'rgba(110,220,255,.105)');
-        halo.addColorStop(.42, 'rgba(114,246,177,.042)');
-        halo.addColorStop(1, 'rgba(110,220,255,0)');
-        ctx.fillStyle = halo;
-        ctx.beginPath();
-        ctx.arc(pointer.x, pointer.y, 195, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      pointerTrail = pointerTrail.filter((point) => now - point.t < 420);
-      if (pointerTrail.length > 1) {
-        for (let i = 1; i < pointerTrail.length; i += 1) {
-          const a = pointerTrail[i - 1];
-          const b = pointerTrail[i];
-          const age = (now - b.t) / 420;
-          ctx.beginPath();
-          ctx.moveTo(a.x, a.y);
-          ctx.lineTo(b.x, b.y);
-          ctx.strokeStyle = `rgba(110,220,255,${Math.max(0, (1 - age) * 0.095)})`;
-          ctx.lineWidth = 0.75;
-          ctx.stroke();
-        }
-      }
-
-      drawMovingStars(now);
-      drawOrion(now);
+      drawStars(now);
       ambientFrame = requestAnimationFrame(drawAmbientFrame);
     }
-
-    window.addEventListener('pointermove', (event) => {
-      if (pointer.lastX > -9000) {
-        pointer.vx = event.clientX - pointer.lastX;
-        pointer.vy = event.clientY - pointer.lastY;
-      }
-      pointer.lastX = event.clientX;
-      pointer.lastY = event.clientY;
-      pointer.x = event.clientX;
-      pointer.y = event.clientY;
-      pointer.active = true;
-      const speed = Math.hypot(pointer.vx, pointer.vy);
-      if (speed > 3 && isFinePointer) {
-        pointerTrail.push({ x: event.clientX, y: event.clientY, t: performance.now() });
-        if (pointerTrail.length > 16) pointerTrail.shift();
-      }
-    }, { passive: true });
-
-    window.addEventListener('pointerdown', (event) => {
-      if (event.target.closest('a, button, input, textarea, select, summary, [role="button"]')) return;
-      if (event.pointerType === 'touch') return;
-
-      ripples.push({
-        x: event.clientX,
-        y: event.clientY,
-        radius: 18,
-        maxRadius: 155 + Math.random() * 55,
-        duration: 820 + Math.random() * 180,
-        startedAt: performance.now()
-      });
-      if (ripples.length > 4) ripples.shift();
-
-      for (const p of particles) {
-        const dx = p.x - event.clientX;
-        const dy = p.y - event.clientY;
-        const distance = Math.hypot(dx, dy);
-        if (distance > 1 && distance < 180) {
-          const force = (1 - distance / 180) * 0.055;
-          p.vx += (dx / distance) * force;
-          p.vy += (dy / distance) * force;
-        }
-      }
-    }, { passive: true });
-
-    document.documentElement.addEventListener('pointerleave', () => {
-      pointer.active = false;
-      pointer.vx = 0;
-      pointer.vy = 0;
-    });
 
     let resizeTimer = 0;
     window.addEventListener('resize', () => {
@@ -1540,6 +884,8 @@ if (ambientCanvas && !reduceMotion) {
     document.addEventListener('visibilitychange', () => {
       ambientRunning = !document.hidden;
       if (ambientRunning) {
+        lastAmbientDraw = 0;
+        nextShootingStarAt = performance.now() + 6000 + Math.random() * 6000;
         cancelAnimationFrame(ambientFrame);
         ambientFrame = requestAnimationFrame(drawAmbientFrame);
       } else {

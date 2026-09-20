@@ -4,7 +4,7 @@
   <!-- If you found this in View Source: hi. This portfolio is plain HTML/CSS/JS on purpose. -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Karthik Saligram is a software developer in Canada building backend systems, cloud infrastructure, Linux developer tools, and full-stack products. Explore What Broke?, NL→SQL, signal-processing work, and other public projects." />
+  <meta name="description" content="Karthik Saligram is a full-stack software developer in Canada building backend systems, cloud infrastructure, Linux developer tools, and full-stack products. Explore What Broke?, NL→SQL, signal-processing work, and other public projects." />
   <meta name="author" content="Karthik Saligram" />
   <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1" />
   <meta name="theme-color" content="#07090d" />
@@ -38,6 +38,32 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <!-- Resolve the theme before styles paint to avoid a flash. Guarded: any storage or
+       matchMedia failure falls back to dark without throwing. Kept in sync by script.js. -->
+  <script>
+    (function () {
+      var root = document.documentElement;
+      // Only hide reveal content once JS is confirmed, so no-JS visitors see everything.
+      root.classList.add('js');
+      var theme = 'dark';
+      try {
+        var saved = null;
+        try { saved = window.localStorage.getItem('portfolio-theme'); } catch (error) { saved = null; }
+        if (saved === 'light' || saved === 'dark') {
+          theme = saved;
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+          theme = 'light';
+        }
+      } catch (error) {
+        theme = 'dark';
+      }
+      root.setAttribute('data-theme', theme);
+      var scheme = document.querySelector('meta[name="color-scheme"]');
+      var color = document.querySelector('meta[name="theme-color"]');
+      if (scheme) scheme.setAttribute('content', theme);
+      if (color) color.setAttribute('content', theme === 'light' ? '#f5f7fa' : '#07090d');
+    })();
+  </script>
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="mediaqueries.css" />
   <script type="application/ld+json">
@@ -66,7 +92,7 @@
         "@id": "https://karthik-07.github.io/portfolio/#karthik-saligram",
         "name": "Karthik Saligram",
         "url": "https://karthik-07.github.io/portfolio/",
-        "image": "https://karthik-07.github.io/portfolio/assets/image-circular.png",
+        "image": "https://karthik-07.github.io/portfolio/assets/karthik-portrait.webp",
         "jobTitle": "Software Developer",
         "email": "mailto:karthikvs216@gmail.com",
         "homeLocation": { "@type": "Country", "name": "Canada" },
@@ -94,6 +120,7 @@
             "@type": "SoftwareSourceCode",
             "name": "What Broke?",
             "url": "https://karthik-07.github.io/portfolio/#project-whatbroke",
+            "codeRepository": "https://github.com/karthik-07/whatBroke",
             "description": "A local Arch Linux CLI that compares systemd journal failures across boots and surfaces package changes that preceded newly observed failures.",
             "programmingLanguage": "Python",
             "runtimePlatform": "Arch Linux"
@@ -132,26 +159,28 @@
   <div class="page-grid" aria-hidden="true"></div>
   <div class="ambient-orb ambient-orb-a" aria-hidden="true"></div>
   <div class="ambient-orb ambient-orb-b" aria-hidden="true"></div>
-  <div class="cursor-glow" aria-hidden="true"></div>
   <div class="scroll-progress" aria-hidden="true"><span id="scroll-progress-bar"></span></div>
 
   <header class="site-header" id="top">
     <nav class="nav shell" aria-label="Primary navigation">
       <a class="brand" href="#top" aria-label="Karthik Saligram home">
-        <span class="brand-mark">KS</span>
+        <span class="brand-mark" aria-hidden="true">KS</span>
         <span class="brand-copy"><strong>Karthik Saligram</strong><small>Software Developer</small></span>
       </a>
 
       <div class="nav-center" id="nav-links">
         <a href="#projects">Projects</a>
         <a href="#experience">Experience</a>
-        <a href="#stack">Stack</a>
+        <a href="#capabilities">Capabilities</a>
         <a href="#about">About</a>
       </div>
 
       <div class="nav-actions">
-        <button class="key-button palette-trigger" type="button" aria-label="Open command palette" aria-haspopup="dialog" aria-controls="command-palette" aria-expanded="false"><span>⌘</span>K</button>
-        <a class="nav-cta" href="#contact">Contact <span>↗</span></a>
+        <button class="theme-toggle" type="button" aria-label="Switch to light theme" aria-pressed="false">
+          <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4.1" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 2.4v2.1M12 19.5v2.1M2.4 12h2.1M19.5 12h2.1M5.3 5.3l1.5 1.5M17.2 17.2l1.5 1.5M18.7 5.3l-1.5 1.5M6.8 17.2l-1.5 1.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20 14.6A8.2 8.2 0 1 1 9.4 4a6.6 6.6 0 0 0 10.6 10.6Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        </button>
+        <a class="nav-cta" href="#contact">Contact <span aria-hidden="true">↗</span></a>
         <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="nav-links" aria-label="Toggle navigation"><span></span><span></span></button>
       </div>
     </nav>
@@ -160,19 +189,19 @@
   <main id="main-content" tabindex="-1">
     <section class="hero shell" aria-labelledby="hero-title">
       <div class="hero-copy reveal">
-        <div class="availability"><span class="pulse"></span> Open to software engineering roles in Canada</div>
-        <p class="hero-kicker mono">BACKEND / CLOUD / LINUX / FULL-STACK</p>
+        <p class="availability"><span class="pulse" aria-hidden="true"></span> Open to full-stack, backend, and cloud roles in Canada</p>
+        <p class="hero-kicker mono">FULL-STACK DEVELOPER · BACKEND · CLOUD · SYSTEMS</p>
         <h1 id="hero-title">I build software that <span class="gradient-text">figures things out.</span></h1>
-        <p class="hero-lede">I’m a software developer who likes the messy layer between “it should work” and “why doesn’t it?”. Most of my work lands in backend systems, cloud infrastructure, Linux, and small tools that remove manual work.</p>
+        <p class="hero-lede">I’m a full-stack software developer with backend, cloud, and systems strengths. Most of my work lands in production services, Linux infrastructure, and the messy layer between “it should work” and “why doesn’t it?” — from data pipelines and APIs through to the interfaces that make them usable.</p>
 
         <div class="hero-actions">
-          <a class="button button-primary" href="#projects">Explore projects <span>↓</span></a>
-          <a class="button button-ghost" href="./assets/Karthik-Resume.pdf" target="_blank" rel="noreferrer">View résumé <span>↗</span></a>
+          <a class="button button-primary" href="#projects">Explore projects <span aria-hidden="true">↓</span></a>
+          <a class="button button-ghost" href="./assets/Karthik-Resume.pdf" target="_blank" rel="noreferrer">View résumé <span aria-hidden="true">↗</span></a>
         </div>
 
-        <div class="hero-meta mono">
-          <span>1+ yr Canadian experience</span><i></i><span>Ottawa, ON</span><i></i><span>Linux · Cloud · Full-stack</span>
-        </div>
+        <p class="hero-meta mono">
+          <span>Full-stack · Backend · Cloud</span><i aria-hidden="true"></i><span>Ottawa, ON</span><i aria-hidden="true"></i><span>Available for roles</span>
+        </p>
       </div>
 
       <div class="hero-terminal-wrap reveal">
@@ -187,7 +216,7 @@
             <div class="terminal-gap"></div>
             <div><span class="term-prompt">karthik@portfolio</span>:<span class="term-path">~</span>$ whoami</div>
             <div class="term-output">Karthik Saligram — Software Developer</div>
-            <div class="term-output muted-line">Backend · Cloud · Linux · Developer Tools</div>
+            <div class="term-output muted-line">Full-stack · Backend · Cloud · Systems</div>
             <div class="terminal-gap"></div>
             <div class="term-output">Type <strong>help</strong> or try <strong>projects</strong>, <strong>skills</strong>, <strong>whatbroke</strong>.</div>
           </div>
@@ -208,23 +237,23 @@
 
       <div class="hero-bottom reveal">
         <div class="hero-socials">
-          <a href="https://github.com/karthik-07" target="_blank" rel="me noreferrer">GitHub <span>↗</span></a>
-          <a href="https://www.linkedin.com/in/karthik-saligram-17968518b/" target="_blank" rel="me noreferrer">LinkedIn <span>↗</span></a>
-          <a href="mailto:karthikvs216@gmail.com">Email <span>↗</span></a>
+          <a href="https://github.com/karthik-07" target="_blank" rel="me noreferrer">GitHub <span aria-hidden="true">↗</span></a>
+          <a href="https://www.linkedin.com/in/karthik-saligram-17968518b/" target="_blank" rel="me noreferrer">LinkedIn <span aria-hidden="true">↗</span></a>
+          <a href="mailto:karthikvs216@gmail.com">Email <span aria-hidden="true">↗</span></a>
         </div>
-        <button class="scroll-cue" type="button" data-scroll="#projects"><span>scroll</span><i></i></button>
+        <button class="scroll-cue" type="button" data-scroll="#projects"><span>scroll</span><i aria-hidden="true"></i></button>
       </div>
     </section>
 
-    <section class="section shell" id="projects">
+    <section class="section shell" id="projects" aria-labelledby="projects-title">
       <div class="section-head reveal">
-        <div><span class="eyebrow mono">01 / PROJECTS</span><h2>Not just cards. <span class="muted-heading">Try them.</span></h2></div>
-        <p>Public, personal work only. Each project below exposes a small piece of the underlying idea instead of just describing it.</p>
+        <div><span class="eyebrow mono">01 / FLAGSHIP PROJECT</span><h2 id="projects-title">What Broke? <span class="muted-heading">— the one I use myself.</span></h2></div>
+        <p>A local Linux forensics CLI that answers the question every developer asks after an update: what changed before this started failing?</p>
       </div>
 
-      <article class="flagship reveal interactive-project-card" id="project-whatbroke" data-project data-tags="linux python systems backend" tabindex="0" aria-label="What Broke interactive project card">
+      <article class="flagship reveal" id="project-whatbroke">
         <div class="flagship-copy">
-          <div class="project-label-row"><span class="status-pill"><i></i> ACTIVE BUILD</span><span class="mono project-tech">PYTHON · ARCH LINUX · SYSTEMD · PACMAN</span></div>
+          <div class="project-label-row"><span class="status-pill"><i aria-hidden="true"></i> ACTIVE BUILD</span><span class="mono project-tech">PYTHON · ARCH LINUX · SYSTEMD · PACMAN</span></div>
           <h3>What Broke?</h3>
           <p class="project-lede">Linux system-change forensics for the moment when everything worked yesterday.</p>
           <p>What Broke? started after I got tired of comparing <code>journalctl</code> output and Pacman package history by hand on my own Arch Linux machine. The CLI compares systemd journal failures across boots, spots newly observed signatures, and shows the package changes that came before them.</p>
@@ -234,13 +263,13 @@
             <div><strong>Explainable</strong><span>Evidence ≠ causation</span></div>
           </div>
           <div class="project-actions">
-            <a class="button button-small button-ghost" href="https://github.com/karthik-07" target="_blank" rel="me noreferrer">GitHub ↗</a>
+            <a class="button button-small button-ghost" href="https://github.com/karthik-07/whatBroke" target="_blank" rel="me noreferrer">View source on GitHub <span aria-hidden="true">↗</span></a>
           </div>
         </div>
 
         <div class="wb-console" id="whatbroke-demo">
           <div class="wb-topbar">
-            <div><span class="status-dot"></span><span class="mono">whatbroke analyze</span></div>
+            <div><span class="status-dot" aria-hidden="true"></span><span class="mono">whatbroke analyze</span></div>
             <div class="scenario-tabs" role="tablist" aria-label="What Broke scenarios">
               <button class="scenario-tab active" type="button" role="tab" aria-selected="true" data-scenario="wifi" id="scenario-wifi" aria-controls="wb-stage" tabindex="0">Wi‑Fi</button>
               <button class="scenario-tab" type="button" role="tab" aria-selected="false" data-scenario="service" id="scenario-service" aria-controls="wb-stage" tabindex="-1">Service</button>
@@ -282,14 +311,79 @@ NetworkManager    upgraded
 
           <div class="wb-footer">
             <div><span class="mono">SIGNAL</span><strong id="wb-signal">New in visible history</strong></div>
-            <button class="run-analysis" id="run-analysis" type="button"><span>▶</span> Run analysis</button>
+            <button class="run-analysis" id="run-analysis" type="button"><span aria-hidden="true">▶</span> Run analysis</button>
           </div>
         </div>
       </article>
+    </section>
+
+    <section class="section shell" id="experience" aria-labelledby="experience-title">
+      <div class="section-head reveal">
+        <div><span class="eyebrow mono">02 / EXPERIENCE</span><h2 id="experience-title">Professional experience. <span class="muted-heading">Straight from my resume.</span></h2></div>
+        <p>The roles, dates, locations, and responsibilities below mirror my current resume. No invented titles or extra experience.</p>
+      </div>
+
+      <ol class="timeline reveal">
+        <li class="timeline-item">
+          <div class="timeline-meta">
+            <span class="mono timeline-period">JULY 2025 — PRESENT</span>
+            <span class="mono timeline-location">OTTAWA, ON</span>
+          </div>
+          <h3 class="timeline-role">Full Stack Developer</h3>
+          <p class="timeline-company">Orbmedic</p>
+          <ul class="timeline-bullets">
+            <li>Owned end-to-end development and beta readiness of a wearable-health platform spanning backend ingestion, physiological signal processing, web interfaces, and mobile applications.</li>
+            <li>Designed backend data pipelines for ingesting and processing ECG, PPG, HRV, and other wearable sensor data, including integration with third-party ECG hardware producing 1 kHz signal streams.</li>
+            <li>Developed algorithms for establishing longitudinal physiological baselines and identifying deviations in wearable sensor data.</li>
+            <li>Developed clinician-facing interfaces using React/Next.js and Flutter mobile and smartwatch applications for physiological data collection and visualization.</li>
+            <li>Worked with containerized backend services using Docker, Celery, MongoDB, Redis, and Nginx to support production deployment and application processing workflows.</li>
+          </ul>
+          <div class="tag-row"><span>React / Next.js</span><span>Flutter</span><span>Docker</span><span>Celery</span><span>MongoDB</span><span>Redis</span><span>Nginx</span></div>
+        </li>
+
+        <li class="timeline-item">
+          <div class="timeline-meta">
+            <span class="mono timeline-period">APRIL 2025 — MARCH 2026</span>
+            <span class="mono timeline-location">OTTAWA, ON</span>
+          </div>
+          <h3 class="timeline-role">Full Stack Developer</h3>
+          <p class="timeline-company">Fair Winds Analytics</p>
+          <ul class="timeline-bullets">
+            <li>Developed full-stack applications using React/Next.js with backend services in Python and Node.js.</li>
+            <li>Designed RESTful APIs for data storage, retrieval, and third-party integrations using OpenAPI standards.</li>
+            <li>Built production features using PostgreSQL, Docker, authentication services, and cloud-based application infrastructure.</li>
+            <li>Deployed frontend and backend services on AWS and implemented GitLab CI/CD pipelines for automated deployment workflows.</li>
+          </ul>
+          <div class="tag-row"><span>React / Next.js</span><span>Python</span><span>Node.js</span><span>OpenAPI</span><span>PostgreSQL</span><span>Docker</span><span>AWS</span><span>GitLab CI/CD</span></div>
+        </li>
+
+        <li class="timeline-item">
+          <div class="timeline-meta">
+            <span class="mono timeline-period">SEPTEMBER 2021 — AUGUST 2022</span>
+            <span class="mono timeline-location">KARNATAKA, INDIA</span>
+          </div>
+          <h3 class="timeline-role">Full Stack Developer</h3>
+          <p class="timeline-company">Manipal School of Information Sciences</p>
+          <ul class="timeline-bullets">
+            <li>Built an internal ASP.NET and SQL academic performance and research management platform for MAHE, used by department heads and research faculty to track grants, research activity, and PhD supervision.</li>
+            <li>Developed a points-based evaluation system using research outcomes, grant status, and PhD supervision metrics to support faculty performance, promotion, tenure, and compensation reviews.</li>
+            <li>Implemented authentication, authorization, and SQL-backed data workflows for internal faculty and administrative users.</li>
+          </ul>
+          <div class="tag-row"><span>ASP.NET</span><span>SQL</span><span>Authentication</span><span>Authorization</span></div>
+        </li>
+      </ol>
+    </section>
+
+    <section class="section shell" id="more-projects" aria-labelledby="more-projects-title">
+      <div class="section-head reveal">
+        <div><span class="eyebrow mono">03 / SUPPORTING PROJECTS</span><h2 id="more-projects-title">Supporting work. <span class="muted-heading">Smaller, still honest.</span></h2></div>
+        <p>Secondary projects with clear status. Each exposes a small piece of the underlying idea instead of pretending to be a finished product.</p>
+      </div>
 
       <div class="project-lab-grid">
-        <article class="lab-card reveal interactive-project-card" id="project-pronunciation" data-project data-tags="python audio signal-processing" tabindex="0" aria-label="Pronunciation Alignment Engine interactive project card">
-          <div class="lab-head"><span class="project-index">02</span><span class="mono muted">SIGNAL PROCESSING</span></div>
+        <article class="lab-card reveal" id="project-pronunciation">
+          <div class="lab-head"><span class="project-index">01</span><span class="mono muted">SIGNAL PROCESSING</span></div>
+          <span class="status-pill status-pill-quiet"><i aria-hidden="true"></i> TECHNICAL PROTOTYPE</span>
           <h3>Pronunciation Alignment Engine</h3>
           <p>Reference-vs-user audio alignment using MFCC features and Dynamic Time Warping. Built to reason about timing differences without pretending speech is perfectly uniform.</p>
           <div class="alignment-demo" id="alignment-demo" aria-label="Pronunciation alignment demo">
@@ -302,10 +396,11 @@ NetworkManager    upgraded
           <div class="tag-row"><span>Python</span><span>MFCC</span><span>DTW</span><span>Audio</span></div>
         </article>
 
-        <article class="lab-card reveal interactive-project-card" id="project-nlsql" data-project data-tags="python sql backend data" tabindex="0" aria-label="Natural language to SQL interactive project card">
-          <div class="lab-head"><span class="project-index">03</span><span class="mono muted">NATURAL LANGUAGE → SQL</span></div>
+        <article class="lab-card reveal" id="project-nlsql">
+          <div class="lab-head"><span class="project-index">02</span><span class="mono muted">NATURAL LANGUAGE → SQL</span></div>
+          <span class="status-pill status-pill-quiet"><i aria-hidden="true"></i> WORK IN PROGRESS</span>
           <h3>NL → SQL Translation Layer</h3>
-          <p>A backend-focused translation layer that maps natural-language questions to schema-aware SQL. The mini console below is an illustrative frontend demo of the flow.</p>
+          <p>A backend-focused translation layer that maps natural-language questions to schema-aware SQL. The mini console below is an illustrative frontend demo of the flow, not a production system.</p>
           <div class="sql-demo">
             <div class="sql-query-row"><span class="mono">ASK</span><input id="sql-question" value="Show patients admitted this month" aria-label="Example natural language database question" /></div>
             <div class="sql-suggestions">
@@ -321,23 +416,24 @@ NetworkManager    upgraded
           <div class="tag-row"><span>Python</span><span>SQL Server</span><span>REST</span><span>Schema-aware</span></div>
         </article>
 
-        <article class="lab-card movie-lab reveal interactive-project-card" id="project-movie" data-project data-tags="javascript frontend api" tabindex="0" aria-label="Movie Database Dashboard interactive project card">
-          <div class="lab-head"><span class="project-index">04</span><span class="mono muted">FRONTEND · API</span></div>
+        <article class="lab-card movie-lab reveal" id="project-movie">
+          <div class="lab-head"><span class="project-index">03</span><span class="mono muted">FRONTEND · API</span></div>
+          <span class="status-pill"><i aria-hidden="true"></i> SHIPPED PROJECT</span>
           <h3>Movie Database Dashboard</h3>
-          <p>An older frontend project: searchable movie discovery with a responsive, card-based interface backed by movie data APIs.</p>
+          <p>A searchable movie discovery dashboard with a responsive, card-based interface backed by movie data APIs. Deployed and available to try.</p>
           <div class="movie-demo movie-browser" aria-label="Interactive sample movie browser">
-            <div class="movie-search"><span>⌕</span><input id="movie-search" placeholder="Search sample titles..." aria-label="Search sample movie titles" /></div>
+            <div class="movie-search"><span aria-hidden="true">⌕</span><input id="movie-search" placeholder="Search sample titles..." aria-label="Search sample movie titles" /></div>
             <div class="movie-results" id="movie-grid" role="listbox" aria-label="Sample movies">
               <button class="movie-result active" type="button" data-movie="interstellar" data-title="Interstellar" role="option" aria-selected="true">
-                <span class="movie-thumb thumb-interstellar"><b>INT</b><small>2014</small></span>
+                <span class="movie-thumb thumb-interstellar" aria-hidden="true"><b>INT</b><small>2014</small></span>
                 <span class="movie-result-copy"><strong>Interstellar</strong><small>Sci‑Fi · 2014</small><em>Explore record →</em></span>
               </button>
               <button class="movie-result" type="button" data-movie="dark-knight" data-title="The Dark Knight" role="option" aria-selected="false">
-                <span class="movie-thumb thumb-dark"><b>TDK</b><small>2008</small></span>
+                <span class="movie-thumb thumb-dark" aria-hidden="true"><b>TDK</b><small>2008</small></span>
                 <span class="movie-result-copy"><strong>The Dark Knight</strong><small>Action · 2008</small><em>Explore record →</em></span>
               </button>
               <button class="movie-result" type="button" data-movie="arrival" data-title="Arrival" role="option" aria-selected="false">
-                <span class="movie-thumb thumb-arrival"><b>ARR</b><small>2016</small></span>
+                <span class="movie-thumb thumb-arrival" aria-hidden="true"><b>ARR</b><small>2016</small></span>
                 <span class="movie-result-copy"><strong>Arrival</strong><small>Sci‑Fi · 2016</small><em>Explore record →</em></span>
               </button>
             </div>
@@ -350,125 +446,86 @@ NetworkManager    upgraded
             <p class="movie-empty mono" id="movie-empty" hidden>No sample titles match that search.</p>
           </div>
           <div class="project-actions">
-            <a class="text-link" href="https://github.com/karthik-07/movie-database" target="_blank" rel="me noreferrer">GitHub ↗</a>
-            <a class="text-link" href="https://karthik-07.github.io/movie-database/" target="_blank" rel="noreferrer">Live demo ↗</a>
+            <a class="text-link" href="https://github.com/karthik-07/movie-database" target="_blank" rel="me noreferrer">Repository <span aria-hidden="true">↗</span></a>
+            <a class="text-link" href="https://karthik-07.github.io/movie-database/" target="_blank" rel="noreferrer">Live demo <span aria-hidden="true">↗</span></a>
           </div>
         </article>
       </div>
     </section>
 
-    <section class="section shell" id="experience">
+    <section class="section shell" id="capabilities" aria-labelledby="capabilities-title">
       <div class="section-head reveal">
-        <div><span class="eyebrow mono">02 / EXPERIENCE</span><h2>Professional experience. <span class="muted-heading">Straight from my resume.</span></h2></div>
-        <p>The roles, dates, locations, and responsibilities below mirror my current resume. No invented titles or extra experience.</p>
+        <div><span class="eyebrow mono">04 / CAPABILITIES</span><h2 id="capabilities-title">What I actually use. <span class="muted-heading">Grouped by problem.</span></h2></div>
+        <p>No fake percentage bars. Each group is a kind of problem I solve, listed with the tools I reach for.</p>
       </div>
 
-      <div class="experience-shell reveal">
-        <div class="timeline-nav" role="tablist" aria-label="Professional experience timeline">
-          <button class="timeline-tab active" type="button" data-exp="orbmedic" role="tab" aria-selected="true" id="exp-orbmedic" aria-controls="experience-panel" tabindex="0"><span>JUL 2025 — PRESENT</span><strong>Full Stack Developer</strong><small>Orbmedic · Ottawa, ON</small></button>
-          <button class="timeline-tab" type="button" data-exp="fairwinds" role="tab" aria-selected="false" id="exp-fairwinds" aria-controls="experience-panel" tabindex="-1"><span>APR 2025 — MAR 2026</span><strong>Full Stack Developer</strong><small>Fair Winds Analytics · Ottawa, ON</small></button>
-          <button class="timeline-tab" type="button" data-exp="manipal" role="tab" aria-selected="false" id="exp-manipal" aria-controls="experience-panel" tabindex="-1"><span>SEP 2021 — AUG 2022</span><strong>Full Stack Developer</strong><small>Manipal School of Information Sciences · Karnataka, India</small></button>
-        </div>
-        <div class="experience-panel" id="experience-panel" role="tabpanel" aria-labelledby="exp-orbmedic" aria-live="polite">
-          <div class="experience-kicker"><span class="mono muted" id="exp-period">JULY 2025 — PRESENT</span><span class="mono muted" id="exp-location">OTTAWA, ON</span></div>
-          <h3 id="exp-title">Full Stack Developer</h3>
-          <strong class="experience-company" id="exp-company">Orbmedic</strong>
-          <ul class="experience-bullets" id="exp-bullets">
-            <li>Owned end-to-end development and beta readiness of a wearable-health platform spanning backend ingestion, physiological signal processing, web interfaces, and mobile applications.</li>
-            <li>Designed backend data pipelines for ingesting and processing ECG, PPG, HRV, and other wearable sensor data, including integration with third-party ECG hardware producing 1 kHz signal streams.</li>
-            <li>Developed algorithms for establishing longitudinal physiological baselines and identifying deviations in wearable sensor data.</li>
-            <li>Developed clinician-facing interfaces using React/Next.js and Flutter mobile and smartwatch applications for physiological data collection and visualization.</li>
-            <li>Worked with containerized backend services using Docker, Celery, MongoDB, Redis, and Nginx to support production deployment and application processing workflows.</li>
-          </ul>
-          <div class="tag-row" id="exp-tags"><span>React / Next.js</span><span>Flutter</span><span>Docker</span><span>Celery</span><span>MongoDB</span><span>Redis</span><span>Nginx</span></div>
-        </div>
+      <div class="capability-grid reveal">
+        <article class="capability" aria-labelledby="cap-frontend">
+          <h3 id="cap-frontend">Frontend</h3>
+          <p>Interfaces are useful when they make the system easier to understand.</p>
+          <ul class="capability-list"><li>React</li><li>Next.js</li><li>Flutter</li><li>JavaScript</li><li>Dart</li><li>C#</li></ul>
+        </article>
+
+        <article class="capability" aria-labelledby="cap-backend">
+          <h3 id="cap-backend">Backend</h3>
+          <p>APIs, workers, and the logic behind the interface.</p>
+          <ul class="capability-list"><li>Python</li><li>Node.js</li><li>REST APIs</li><li>OpenAPI</li><li>Celery</li><li>ASP.NET</li></ul>
+        </article>
+
+        <article class="capability" aria-labelledby="cap-cloud">
+          <h3 id="cap-cloud">Cloud &amp; DevOps</h3>
+          <p>Ship it, automate it, know where it runs.</p>
+          <ul class="capability-list"><li>AWS</li><li>Azure</li><li>Docker</li><li>GitLab CI/CD</li><li>Git</li><li>GitHub</li></ul>
+        </article>
+
+        <article class="capability" aria-labelledby="cap-data">
+          <h3 id="cap-data">Data</h3>
+          <p>Structure first, then query it cleanly.</p>
+          <ul class="capability-list"><li>PostgreSQL</li><li>MongoDB</li><li>Redis</li><li>SQL</li></ul>
+        </article>
+
+        <article class="capability" aria-labelledby="cap-systems">
+          <h3 id="cap-systems">Systems</h3>
+          <p>I like knowing what the machine is actually doing.</p>
+          <ul class="capability-list"><li>Linux</li><li>Arch Linux</li><li>systemd</li><li>Docker</li><li>Nginx</li></ul>
+        </article>
       </div>
     </section>
 
-    <section class="section shell" id="stack">
-      <div class="section-head reveal">
-        <div><span class="eyebrow mono">03 / STACK</span><h2>Click a domain. <span class="muted-heading">See what I actually use.</span></h2></div>
-        <p>No fake percentage bars. The stack is grouped by the kind of problem each tool helps me solve.</p>
-      </div>
-
-      <div class="stack-console reveal">
-        <div class="stack-tabs" role="tablist" aria-label="Technology domains">
-          <button class="stack-tab active" type="button" data-stack="systems" role="tab" aria-selected="true" id="stack-systems" aria-controls="stack-view" tabindex="0">Systems</button>
-          <button class="stack-tab" type="button" data-stack="backend" role="tab" aria-selected="false" id="stack-backend" aria-controls="stack-view" tabindex="-1">Backend</button>
-          <button class="stack-tab" type="button" data-stack="cloud" role="tab" aria-selected="false" id="stack-cloud" aria-controls="stack-view" tabindex="-1">Cloud</button>
-          <button class="stack-tab" type="button" data-stack="frontend" role="tab" aria-selected="false" id="stack-frontend" aria-controls="stack-view" tabindex="-1">Frontend</button>
-          <button class="stack-tab" type="button" data-stack="data" role="tab" aria-selected="false" id="stack-data" aria-controls="stack-view" tabindex="-1">Data</button>
-        </div>
-        <div class="stack-view" id="stack-view" role="tabpanel" aria-labelledby="stack-systems">
-          <div class="stack-copy"><span class="mono muted" id="stack-label">SYSTEMS</span><h3 id="stack-title">I like knowing what the machine is actually doing.</h3><p id="stack-description">Linux is my daily environment. My resume stack includes Arch Linux, systemd, Docker, and Nginx alongside backend and cloud tooling.</p></div>
-          <div class="stack-nodes" id="stack-nodes">
-            <button type="button">Linux</button><button type="button">Arch Linux</button><button type="button">systemd</button><button type="button">Docker</button><button type="button">Nginx</button>
-          </div>
-        </div>
-        <div class="stack-related"><span class="mono muted">RELATED PROJECTS</span><div id="stack-projects"><button type="button" data-scroll="#projects">What Broke?</button></div></div>
-      </div>
-    </section>
-
-    <section class="section shell" id="about">
+    <section class="section shell" id="about" aria-labelledby="about-title">
       <div class="about-grid">
         <div class="about-copy reveal">
-          <span class="eyebrow mono">04 / ABOUT</span>
-          <h2>I care more about the <span class="gradient-text">reasoning layer</span> than the demo layer.</h2>
+          <span class="eyebrow mono">05 / ABOUT</span>
+          <h2 id="about-title">I care more about the <span class="gradient-text">reasoning layer</span> than the demo layer.</h2>
           <p>My background spans software development, cloud computing, Linux, and cybersecurity. I’m usually happiest when there is something concrete to untangle: a broken system, an awkward workflow, a query that needs structure, or a signal that needs alignment.</p>
           <p>I prefer small, explainable systems with clear boundaries over unnecessary complexity. If a simpler approach works, I would rather understand it deeply than hide the problem behind another layer.</p>
           <aside class="human-note" aria-label="Why I build side projects"><span class="mono">WHY I BUILD SIDE PROJECTS</span><p>Most of them start because something annoyed me enough to investigate it. What Broke? came from debugging my own Linux machine. I’d rather turn that frustration into a tool than solve the same problem twice.</p></aside>
         </div>
 
-        <div class="about-terminal reveal">
-          <div class="code-head"><span>developer.json</span><span class="mono">read-only</span></div>
-          <pre><code>{
-  <span class="json-key">"name"</span>: <span class="json-string">"Karthik Saligram"</span>,
-  <span class="json-key">"focus"</span>: [
-    <span class="json-string">"backend"</span>,
-    <span class="json-string">"cloud"</span>,
-    <span class="json-string">"linux"</span>,
-    <span class="json-string">"developer tools"</span>
-  ],
-  <span class="json-key">"location"</span>: <span class="json-string">"Canada"</span>,
-  <span class="json-key">"education"</span>: <span class="json-string">"Cloud Computing"</span>,
-  <span class="json-key">"currently_building"</span>: <span class="json-string">"What Broke?"</span>,
-  <span class="json-key">"open_to_work"</span>: <span class="json-bool">true</span>
-}</code></pre>
-        </div>
+        <figure class="about-portrait reveal">
+          <img src="./assets/karthik-portrait.webp" width="720" height="720" loading="lazy" decoding="async" alt="Portrait of Karthik Saligram wearing a dark suit and patterned tie." />
+          <figcaption class="about-portrait-caption mono">Karthik Saligram · Ottawa, ON</figcaption>
+        </figure>
       </div>
     </section>
 
-    <section class="contact-section" id="contact">
+    <section class="contact-section" id="contact" aria-labelledby="contact-title">
       <div class="shell contact-panel reveal">
-        <div class="contact-copy"><span class="eyebrow mono">05 / CONTACT</span><h2>Have a problem worth figuring out?</h2><p>I’m open to software engineering roles and conversations around backend systems, Linux, cloud infrastructure, and developer tooling.</p></div>
+        <div class="contact-copy"><span class="eyebrow mono">06 / CONTACT</span><h2 id="contact-title">Have a problem worth figuring out?</h2><p>I’m open to full-stack, backend, cloud, and developer-tooling roles. The fastest way to reach me is email.</p></div>
         <div class="contact-actions">
-          <a class="button button-primary" href="mailto:karthikvs216@gmail.com">Email me <span>↗</span></a>
+          <a class="button button-primary" href="mailto:karthikvs216@gmail.com">Email me <span aria-hidden="true">↗</span></a>
           <button class="button button-ghost copy-email" type="button" data-email="karthikvs216@gmail.com">Copy email</button>
-          <a class="button button-ghost" href="https://github.com/karthik-07" target="_blank" rel="me noreferrer">GitHub <span>↗</span></a>
+          <a class="button button-ghost" href="https://github.com/karthik-07" target="_blank" rel="me noreferrer">GitHub <span aria-hidden="true">↗</span></a>
         </div>
       </div>
     </section>
   </main>
 
   <footer class="footer shell">
-    <div class="footer-left"><span class="brand-mark">KS</span><div><strong>Karthik Saligram</strong><small>Built with HTML, CSS & vanilla JavaScript. I did over-engineer the background.</small></div></div>
+    <!-- <div class="footer-left"><span class="brand-mark" aria-hidden="true">KS</span><div><strong>Karthik Saligram</strong><small>Built with HTML, CSS &amp; vanilla JavaScript. No framework required.</small></div></div> -->
     <div class="footer-links"><a href="https://github.com/karthik-07" target="_blank" rel="me noreferrer">GitHub</a><a href="https://www.linkedin.com/in/karthik-saligram-17968518b/" target="_blank" rel="me noreferrer">LinkedIn</a><a href="#top">Top ↑</a></div>
     <span class="mono muted">© <span id="year"></span></span>
   </footer>
-
-  <div class="command-palette" id="command-palette" aria-hidden="true">
-    <button class="palette-backdrop" type="button" tabindex="-1" aria-label="Close command palette"></button>
-    <div class="palette-dialog" role="dialog" aria-modal="true" aria-labelledby="palette-title">
-      <div class="palette-search-row">
-        <span>⌕</span>
-        <label class="sr-only" for="palette-search" id="palette-title">Search portfolio commands</label>
-        <input id="palette-search" placeholder="Search portfolio..." autocomplete="off" />
-        <kbd>esc</kbd>
-      </div>
-      <div class="palette-results" id="palette-results"></div>
-      <div class="palette-footer"><span><kbd>↑</kbd><kbd>↓</kbd> navigate</span><span><kbd>↵</kbd> open</span><span>Ctrl/Cmd + K</span></div>
-    </div>
-  </div>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
