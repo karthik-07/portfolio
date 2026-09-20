@@ -1,0 +1,33 @@
+schema: spec-driven
+
+# Project context (optional)
+# This is shown to AI when creating artifacts.
+# Add your tech stack, conventions, style guides, domain knowledge, etc.
+context: |
+  Tech stack: Vanilla HTML5, CSS3, JavaScript (ES6+) (no build)
+  structure: single-page portfolio (index.html, style.css, mediaqueries.css, script.js)
+  Also dont use unecessary tests and libraries unless i tell you. And if you have any questions about the project, ask me before proceeding. 
+  Make sure the text in the cards are also responsive and the text is not cut off in any screen size. Don't overcomplicate the code and keep it simple. Use semantic HTML5 elements and follow BEM methodology for CSS class naming. Ensure accessibility standards are met (WCAG 2.1). Optimize images and media for web performance.
+  Use responsive design; follow best and most efficient way of styling and structuring code; use semantic HTML5 elements; follow BEM methodology for CSS class naming; use ES6+ features for JavaScript; ensure accessibility standards are met (WCAG 2.1); optimize images and media for web performance;.
+
+# Per-artifact rules (optional)
+# Add custom rules for specific artifacts.
+# Example:
+#   rules:
+#     proposal:
+#       - Keep proposals under 500 words
+#       - Always include a "Non-goals" section
+#     tasks:
+#       - Break tasks into chunks of max 2 hours
+
+# Per-operation guidance (optional)
+# Add advisory guidance for how apply and archive work should be conducted.
+# This is separate from artifact rules above.
+# Example:
+#   operations:
+#     apply:
+#       guidance:
+#         - Keep test summaries concise
+#     archive:
+#       guidance:
+#         - Summarize the archive outcome before finishing
