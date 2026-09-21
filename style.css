@@ -36,6 +36,8 @@
   --nebula-warm: rgba(255, 190, 130, .06);
   --section-accent: var(--cyan);
   --section-accent-soft: rgba(110, 220, 255, .12);
+  --surface-inset: rgba(255, 255, 255, .035);
+  --surface-light: rgba(255, 255, 255, .06);
 
   /* Depth + motion */
   --depth: 1;
@@ -88,6 +90,8 @@
   --nebula-green: rgba(12, 122, 77, .07);
   --nebula-cyan: rgba(9, 106, 140, .08);
   --nebula-warm: rgba(168, 100, 31, .06);
+  --surface-inset: rgba(22, 44, 82, .045);
+  --surface-light: rgba(22, 44, 82, .05);
   --sky-star-1: 11, 127, 168;
   --sky-star-2: 15, 157, 99;
   --sky-star-solid-1: 9, 100, 134;
@@ -418,8 +422,8 @@ main, footer { position: relative; z-index: 2; }
   border-radius: 50%; filter: blur(110px); opacity: .8;
 }
 [data-atmosphere="flagship"]::before {
-  right: 0; top: -6rem;
-  background: radial-gradient(circle, var(--nebula-green), transparent 68%);
+  right: 0; top: -6rem; opacity: .5;
+  background: radial-gradient(circle, color-mix(in srgb, var(--text) 6%, transparent), transparent 68%);
 }
 [data-atmosphere="experience"]::before {
   left: 0; top: 18%;
@@ -438,8 +442,8 @@ main, footer { position: relative; z-index: 2; }
   background: radial-gradient(circle, var(--nebula-warm), transparent 68%);
 }
 [data-atmosphere="contact"]::before {
-  left: 50%; bottom: -10rem; transform: translateX(-50%);
-  background: radial-gradient(circle, var(--nebula-green), transparent 68%);
+  left: 50%; bottom: -10rem; transform: translateX(-50%); opacity: .5;
+  background: radial-gradient(circle, color-mix(in srgb, var(--text) 6%, transparent), transparent 68%);
 }
 
 .section-head {
@@ -655,7 +659,7 @@ main, footer { position: relative; z-index: 2; }
   background: color-mix(in srgb, var(--surface) 88%, transparent);
   backdrop-filter: blur(10px);
   overflow: hidden;
-  box-shadow: 0 30px 80px rgba(0, 0, 0, .3), inset 0 0 60px var(--section-accent-soft);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, .3), inset 0 0 60px var(--surface-inset);
 }
 .flagship-copy { align-self: center; }
 .project-label-row { display: flex; align-items: center; gap: 11px; flex-wrap: wrap; }
@@ -916,7 +920,7 @@ main, footer { position: relative; z-index: 2; }
 .capability[data-accent="green"] { --card-accent: var(--green); }
 .capability::before {
   content: ""; position: absolute; inset: 0; pointer-events: none;
-  background: radial-gradient(310px circle at 12% 0%, color-mix(in srgb, var(--card-accent) 13%, transparent), transparent 62%);
+  background: radial-gradient(310px circle at var(--sx, 12%) var(--sy, 0%), color-mix(in srgb, var(--card-accent) 13%, transparent), transparent 62%);
 }
 .capability::after { content: ""; position: absolute; left: 20px; right: 20px; top: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--card-accent), transparent); box-shadow: 0 0 16px var(--card-accent); opacity: .58; }
 .capability--featured { border-color: color-mix(in srgb, var(--card-accent) 48%, var(--line)); box-shadow: inset 0 1px 0 color-mix(in srgb, var(--card-accent) 22%, transparent), inset 0 0 48px color-mix(in srgb, var(--card-accent) 8%, transparent), 0 20px 55px rgba(0,0,0,.2); }
@@ -1011,7 +1015,7 @@ main, footer { position: relative; z-index: 2; }
   border: 1px solid var(--line-strong); border-radius: var(--radius-lg);
   padding: 48px; background: color-mix(in srgb, var(--surface) 90%, transparent);
   backdrop-filter: blur(10px);
-  box-shadow: 0 30px 80px rgba(0, 0, 0, .3), inset 0 0 60px var(--section-accent-soft);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, .3), inset 0 0 60px var(--surface-inset);
 }
 .contact-copy h2 { max-width: 680px; }
 .contact-copy p { color: var(--muted); max-width: 640px; margin: 22px 0 0; }
@@ -1075,16 +1079,40 @@ main, footer { position: relative; z-index: 2; }
 }
 [data-motion="constrained"] .capability[data-tilt],
 [data-motion="static"] .capability[data-tilt] { transform: none; }
+[data-motion="constrained"] [data-tilt],
+[data-motion="static"] [data-tilt] { transform: none; }
+
+/* One shared, low-opacity pointer light for the major surface set. It reads the
+   coordinator's existing --sx/--sy variables and never adds its own listener. */
+.flagship::after,
+.timeline-item::after,
+.lab-card::after,
+.contact-panel::after {
+  content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit; pointer-events: none;
+  background: radial-gradient(300px circle at var(--sx, 50%) var(--sy, 0%), var(--surface-light), transparent 62%);
+  opacity: 0; transition: opacity .3s ease;
+}
+@media (hover: hover) and (pointer: fine) {
+  .flagship:hover::after,
+  .timeline-item:hover::after,
+  .lab-card:hover::after,
+  .contact-panel:hover::after { opacity: 1; }
+}
 
 /* -------------------------
    Reveal sequencing
    ------------------------- */
-html.js[data-motion="full"] .reveal,
-html.js[data-motion="constrained"] .reveal {
-  opacity: 0; transform: translateY(18px);
+html.js :where(.reveal) {
   transition: opacity .7s ease, transform .7s cubic-bezier(.2, .7, .2, 1);
 }
-html.js .reveal.is-visible { opacity: 1; transform: none; }
+html.js[data-motion="full"] .reveal:not(.is-visible),
+html.js[data-motion="constrained"] .reveal:not(.is-visible) {
+  opacity: 0; transform: translateY(18px);
+}
+/* Tilt surfaces must keep ownership of their transform once revealed; only
+   non-tilt reveals fall back to a settled transform. */
+html.js .reveal.is-visible { opacity: 1; }
+html.js .reveal.is-visible:not([data-tilt]) { transform: none; }
 
 /* When the verified engine drives motion, hand it full control of these properties. */
 html[data-engine="gsap"] .reveal { transition: none; }

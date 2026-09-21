@@ -2,12 +2,12 @@
 
 ## ADDED Requirements
 
-### Requirement: High-impact celestial composition
-The portfolio SHALL include at least one unmistakable large-scale celestial subject and supporting nebula and orbital forms so that the page reads immediately as a designed space environment rather than a star-dot background.
+### Requirement: Cohesive celestial composition
+The portfolio SHALL present a cohesive designed space environment built from depth stars, orbital arcs, horizon forms, and layered parallax, without oversized celestial bodies or broad colored washes that compete with content.
 
 #### Scenario: Visitor enters in dark mode
 - **WHEN** a visitor opens the portfolio in dark mode on a capable desktop viewport
-- **THEN** the initial composition presents a luminous planetary horizon, atmospheric rim, orbital geometry, nebula depth, and supporting stars with a clear foreground-to-background hierarchy
+- **THEN** the composition presents orbital geometry, horizon forms, depth layers, and supporting stars with a clear foreground-to-background hierarchy
 
 #### Scenario: Visitor enters in light mode
 - **WHEN** a visitor opens the portfolio in light mode
@@ -15,7 +15,7 @@ The portfolio SHALL include at least one unmistakable large-scale celestial subj
 
 #### Scenario: Visitor scrolls through the page
 - **WHEN** the visitor moves beyond the hero
-- **THEN** large-form nebula and orbital elements evolve across sections while stars remain supporting texture rather than the only visible space treatment
+- **THEN** orbital and horizon geometry continues across sections through localized, restrained accents while stars remain supporting texture and no large green wash dominates a section
 
 #### Scenario: Enhanced motion is unavailable
 - **WHEN** reduced motion, constrained capability, unavailable canvas, or disabled JavaScript prevents animation

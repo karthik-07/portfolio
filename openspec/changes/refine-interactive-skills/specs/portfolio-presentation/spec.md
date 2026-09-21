@@ -22,23 +22,23 @@ The portfolio SHALL retain the interactive hero terminal and a restrained ambien
 - **THEN** non-essential ambient and transition motion is disabled or reduced without hiding content
 
 ### Requirement: Restrained interaction model
-The portfolio SHALL omit the command palette, pointer-following glow or trail, click ripples, hidden constellations, and magnetic controls while allowing bounded three-dimensional tilt on established card surfaces, including Skills modules, only for capable fine-pointer devices without a reduced-motion request.
+The portfolio SHALL omit the command palette, pointer-following glow or trail, click ripples, hidden constellations, and magnetic controls while allowing bounded three-dimensional tilt on established card surfaces, including Skills cards, only for capable fine-pointer devices without a reduced-motion request.
 
 #### Scenario: Visitor points or clicks around the page
 - **WHEN** pointer movement or a click occurs outside an explicit control or supported card surface
 - **THEN** the page does not create a pointer-following effect, ripple, hidden discovery, magnetic displacement, or unrelated card response
 
-#### Scenario: Fine-pointer visitor explores a Skills module
-- **WHEN** a visitor using a capable fine pointer moves across a Skills module while full motion is enabled
-- **THEN** that module responds with the same bounded pointer-relative tilt and lift language used by the Professional Experience cards while its related decorative connection is emphasized
+#### Scenario: Fine-pointer visitor explores a Skills card
+- **WHEN** a visitor using a capable fine pointer moves across a Skills card while full motion is enabled
+- **THEN** that card responds with the same bounded pointer-relative tilt and lift language used by the Professional Experience cards while its related decorative connection is emphasized
 
-#### Scenario: Visitor selects a Skills module
-- **WHEN** a visitor hovers, keyboard-focuses, or touch-selects a Skills module
-- **THEN** that module and its related decorative connection receive a clear bounded emphasis without hiding other content or being required to read its technologies
+#### Scenario: Visitor selects a Skills card
+- **WHEN** a visitor hovers, keyboard-focuses, or touch-selects a Skills card
+- **THEN** that card and its related decorative connection receive a clear bounded emphasis without hiding other content or being required to read its technologies
 
 #### Scenario: Motion or pointer capability is limited
 - **WHEN** reduced motion is requested, the motion tier is constrained or static, or the primary input cannot hover precisely
-- **THEN** Skills modules remain static while preserving visible hover where applicable, focus, selection, and readable content
+- **THEN** Skills cards remain static while preserving visible hover where applicable, focus, selection, and readable content
 
 ### Requirement: Visible experience and capabilities
 The portfolio SHALL expose every professional role and each technical capability group in the document without requiring tab selection or scripted interaction, and SHALL arrange Skills modules on visibly aligned desktop, tablet, and mobile layouts.

@@ -101,3 +101,41 @@ test('skills tilt is gated to fine pointers and full motion', () => {
   assert.match(css, /\[data-motion="static"\] \.capability\[data-tilt\]\s*\{[^}]*transform: none/);
   assert.match(css, /prefers-reduced-motion:\s*reduce/);
 });
+
+test('WhatBroke? naming is human-readable while lowercase stays on commands and paths', () => {
+  assert.match(html, /Explore WhatBroke\?,/);
+  assert.match(html, /"name": "WhatBroke\?"/);
+  assert.match(html, /<h2 id="projects-title">WhatBroke\?/);
+  assert.match(html, /<h3>WhatBroke\?<\/h3>/);
+  assert.match(html, /WhatBroke\? started after/);
+  assert.match(html, /WhatBroke\? came out of/);
+  assert.match(script, /<strong>WhatBroke\?<\/strong>/);
+  assert.doesNotMatch(html, /What Broke\?/);
+  assert.doesNotMatch(script, /What Broke\?/);
+  assert.match(html, /data-terminal-command="whatbroke"/);
+  assert.match(html, /github\.com\/karthik-07\/whatBroke/);
+  assert.match(html, /id="whatbroke-demo"/);
+  assert.match(html, /<strong>whatbroke<\/strong>/);
+});
+
+test('major surfaces join the shared tilt set while nested surfaces stay static', () => {
+  assert.match(html, /<article class="flagship[^"]*"[^>]*data-tilt/);
+  assert.equal((html.match(/<li class="timeline-item"[^>]*data-tilt/g) || []).length, 3);
+  assert.equal((html.match(/<article class="lab-card[^"]*"[^>]*data-tilt/g) || []).length, 3);
+  assert.equal((html.match(/<article class="capability [^"]*"[^>]*data-tilt/g) || []).length, 6);
+  assert.match(html, /<div class="shell contact-panel reveal"[^>]*data-tilt/);
+  assert.doesNotMatch(html, /class="proof-point"[^>]*data-tilt/);
+  assert.doesNotMatch(html, /class="project-proof"[^>]*data-tilt/);
+  assert.doesNotMatch(html, /class="wb-console[^"]*"[^>]*data-tilt/);
+  assert.doesNotMatch(html, /class="human-note"[^>]*data-tilt/);
+  assert.doesNotMatch(html, /class="[^"]*button[^"]*"[^>]*data-tilt/);
+});
+
+test('flagship and Contact use neutral surfaces with localized green only', () => {
+  assert.doesNotMatch(css, /\[data-atmosphere="flagship"\]::before\s*\{[^}]*nebula-green/);
+  assert.doesNotMatch(css, /\[data-atmosphere="contact"\]::before\s*\{[^}]*nebula-green/);
+  assert.match(css, /--surface-inset:\s*/);
+  assert.match(css, /\.flagship\s*\{[^}]*var\(--surface-inset\)/);
+  assert.match(css, /\.contact-panel\s*\{[^}]*var\(--surface-inset\)/);
+  assert.match(html, /class="status-pill"><i aria-hidden="true"><\/i> ACTIVE BUILD/);
+});

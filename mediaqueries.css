@@ -129,6 +129,13 @@
   .skills-constellation { padding: 10px; border-radius: 18px; }
 }
 
+@media (max-width: 400px) {
+  .brand { width: auto; min-width: 0; }
+  .brand-copy { display: none; }
+  .nav { gap: 12px; }
+  .nav-actions { gap: 7px; }
+}
+
 /* Constrained tier: keep composition, calm the ambience */
 [data-motion="constrained"] .cosmos__grain { opacity: .035; }
 

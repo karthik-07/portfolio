@@ -10,7 +10,7 @@ This follow-up must refine those visible gaps without replacing the current moti
 
 **Goals:**
 
-- Create an immediate, unmistakable celestial focal point before adding more small particles.
+- Preserve one cohesive celestial scene through depth, orbital geometry, and horizon forms rather than broad colored washes.
 - Make Skills feel spatially composed and native to the dark cosmic theme.
 - Turn availability into one of the clearest messages in the initial viewport.
 - Reuse the current canvas, CSS token system, GSAP guard, and progressive enhancement tiers.
@@ -26,21 +26,17 @@ This follow-up must refine those visible gaps without replacing the current moti
 
 ## Decisions
 
-### 1. Make a cropped planetary horizon the primary celestial subject
+### 1. Keep a cohesive celestial scene without an oversized subject
 
-Add a large procedural planet anchored behind the hero's right side and terminal, partially cropped by the viewport. It uses layered HTML/CSS surfaces: a radial base, low-opacity atmospheric bands, a strong cyan/green rim, a deep terminator shadow, a soft outer atmosphere, and one wide orbital ring. The planet is large enough to read as a planetary horizon rather than a decorative circle.
+Compose the background from depth stars, thin orbital outlines, horizon forms, and layered parallax so it reads as a designed space environment rather than a field of dots. A large procedural planet and atmospheric sphere were removed by the later `refine-interactive-skills` change because they competed with hero copy and terminal contrast; this change does not reintroduce them.
 
-The terminal remains above the planet with readable contrast, producing a cockpit-above-orbit composition. On full-motion devices, pointer and scroll input move the atmosphere, ring, and surface bands at different capped depths. Static and constrained tiers show the same planet without continuous motion.
+On full-motion devices, pointer and scroll input move the depth layers at capped distances. Static and constrained tiers show the same geometry without continuous motion. Alternative considered: reintroduce a cropped planetary horizon. Rejected because it duplicates the removed composition and competes with recruiter-critical content.
 
-Alternative considered: a black hole with an accretion disk. Rejected because it would demand stronger animation and contrast, compete with text, and risk a more ominous tone. Alternative considered: simply increase star and shooting-star density. Rejected because it would preserve the exact “bunch of dots” problem.
+### 2. Continue the space identity with orbital and horizon geometry
 
-### 2. Add broad nebula ribbons and section-to-section celestial continuity
+Rather than nebula ribbons, the scene continues down the page through partial orbital arcs, horizon forms, and section-local accent glows. Existing stars remain for scale and texture. GSAP may scrub only cheap transform/opacity values through its existing guarded path; the static CSS scene remains complete if GSAP is unavailable.
 
-Replace the impression of three isolated blurred circles with two broad, irregular nebula ribbons that cross the canvas at different depths. Use layered gradients and masks rather than bitmap images. Existing stars remain for scale and texture; orbital arcs and occasional events remain secondary.
-
-The hero planet provides the first focal mass. Lower sections receive partial arcs, horizon glows, and drifting nebula color shifts so the space identity continues without repeating another full planet. GSAP may scrub only cheap transform/opacity values through its existing guarded path; the static CSS scene remains complete if GSAP is unavailable.
-
-Alternative considered: unique large planets in every section. Rejected because repeated focal objects would dilute the hero and increase visual noise.
+Flagship and Contact specifically avoid broad green washes: their surfaces stay neutral, and green is reserved for meaningful active, availability, action, and signal details. Other sections keep only localized, restrained accents. Alternative considered: colored nebula fog per section. Rejected because it competes with content and varies unpredictably between themes.
 
 ### 3. Replace the equal Skills grid with a constellation dashboard
 
@@ -73,7 +69,7 @@ Alternative considered: a large modal or banner. Rejected because it would inter
 
 ### 5. Preserve the existing progressive enhancement boundaries
 
-The new planet, nebula ribbons, availability text, and skill content exist in HTML/CSS. JavaScript only coordinates bounded parallax, section depth, and skill-line illumination in the full tier. Constrained mode uses a sparse star canvas and static/cheap CSS ambience; static mode stops all celestial, beacon, and constellation animation.
+The celestial geometry, availability text, and skill content exist in HTML/CSS. JavaScript only coordinates bounded parallax, section depth, and skill-line illumination in the full tier. Constrained mode uses a sparse star canvas and static/cheap CSS ambience; static mode stops all celestial, beacon, and constellation animation.
 
 The existing document visibility pause, device-pixel-ratio cap, pointer rAF coordination, GSAP guards, no-JavaScript visibility, and reduced-motion rules remain controlling behavior. No new continuous animation loop is added.
 
@@ -89,7 +85,7 @@ Verification also covers light mode, reduced motion, canvas/GSAP failure, 320px,
 
 ## Risks / Trade-offs
 
-- [The planet competes with hero copy or terminal] → Anchor it behind the terminal, control luminance with the terminator shadow, and test both themes at target widths.
+- [Celestial geometry competes with hero copy or terminal] → Keep large forms behind content, cap luminance with masks and depth shadows, and test both themes at target widths.
 - [Skills hierarchy implies weaker competency in smaller modules] → Use size to emphasize recruiter differentiators, not proficiency ratings; keep typography and tool visibility consistent.
 - [Constellation lines overlap content after resize] → Use stable decorative anchor points, recalculate only on debounced resize when needed, and hide connections below the desktop breakpoint.
 - [Availability treatment feels too promotional] → Use concise factual language, one contact action, and instrumentation styling rather than a marketing banner.
@@ -99,7 +95,7 @@ Verification also covers light mode, reduced motion, canvas/GSAP failure, 320px,
 ## Migration Plan
 
 1. Add semantic availability content and decorative scene/Skills hooks without changing existing anchors or document order.
-2. Build the static planet, atmosphere, nebula ribbons, availability panel, and redesigned Skills composition in both themes.
+2. Build the static celestial geometry, availability panel, and redesigned Skills composition in both themes without broad colored washes.
 3. Add full-tier parallax and illumination using the existing pointer, GSAP, and motion-tier systems.
 4. Add tablet/mobile reflow and reduced-motion/no-JavaScript fallbacks.
 5. Run targeted visual, responsive, accessibility, and performance verification.

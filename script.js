@@ -59,6 +59,13 @@ function registerMotionEngine() {
   return true;
 }
 
+// Hand the transform back to CSS once a reveal lands so major surfaces keep ownership
+// of their tilt; the class also disables the stylesheet's hidden reveal state.
+function settleReveals(items) {
+  items.forEach((item) => item.classList.add('is-visible'));
+  window.gsap.set(items, { clearProps: 'transform' });
+}
+
 function initGsapReveals() {
   if (!registerMotionEngine()) return false;
   const gsap = window.gsap;
@@ -67,19 +74,21 @@ function initGsapReveals() {
     start: 'top 88%',
     once: true,
     onEnter: (batch) => gsap.to(batch, {
-      autoAlpha: 1, y: 0, duration: 0.7, ease: 'power2.out', stagger: 0.07, overwrite: true
+      autoAlpha: 1, y: 0, duration: 0.7, ease: 'power2.out', stagger: 0.07, overwrite: true,
+      onComplete: () => settleReveals(batch)
     })
   });
   // Safety net: motion must never gate content. Anything already on screen that the
   // engine has not revealed shortly after init is shown regardless.
   window.setTimeout(() => {
     const limit = window.innerHeight * 0.95;
-    revealItems.forEach((item) => {
+    const pending = revealItems.filter((item) => {
       const rect = item.getBoundingClientRect();
-      if (rect.top < limit && rect.bottom > 0 && parseFloat(getComputedStyle(item).opacity) < 0.05) {
-        gsap.to(item, { autoAlpha: 1, y: 0, duration: 0.4, overwrite: true });
-      }
+      return rect.top < limit && rect.bottom > 0 && parseFloat(getComputedStyle(item).opacity) < 0.05;
     });
+    if (pending.length) {
+      gsap.to(pending, { autoAlpha: 1, y: 0, duration: 0.4, overwrite: true, onComplete: () => settleReveals(pending) });
+    }
   }, 1000);
   return true;
 }
@@ -933,7 +942,7 @@ const terminalCommands = {
   },
   story: () => [
     '<span class="term-output">Most of my side projects start with an annoyance, not a pitch deck.</span>',
-    '<span class="term-output">What Broke? started after I got tired of manually comparing journal logs and package changes on my own Arch machine.</span>',
+    '<span class="term-output">WhatBroke? started after I got tired of manually comparing journal logs and package changes on my own Arch machine.</span>',
     '<span class="term-output muted-line">If I have to debug the same kind of problem twice, I start wondering whether it should be a tool.</span>'
   ],
   whatbroke: () => {
@@ -943,7 +952,7 @@ const terminalCommands = {
       window.setTimeout(() => $('#whatbroke-demo')?.classList.remove('attention'), 1450);
     }, 180);
     return [
-      '<span class="term-output"><strong>What Broke?</strong></span>',
+      '<span class="term-output"><strong>WhatBroke?</strong></span>',
       '<span class="term-output">Linux system-change forensics CLI.</span>',
       '<span class="term-output muted-line">Comparing boots → finding new errors → showing preceding changes.</span>'
     ];
@@ -1090,7 +1099,7 @@ $$('[data-terminal-command]').forEach((button) => {
 });
 
 // =========================================================
-// What Broke? analysis sequence
+// WhatBroke? analysis sequence
 // =========================================================
 const wbDemo = $('#whatbroke-demo');
 const scenarioTabs = $$('.scenario-tab');

@@ -8,14 +8,14 @@
 
 ## 2. High-impact celestial scene
 
-- [x] 2.1 Add decorative BEM-structured markup for a cropped hero planet, atmosphere, surface bands, terminator shadow, and orbital ring, all excluded from the accessibility tree; verify the hero's semantic content and tab order are unchanged.
-- [ ] 2.2 Implement the static planetary horizon in dark and light themes using layered gradients, masks, rim light, and depth shadows; verify it reads as a planet before individual stars while preserving hero and terminal contrast.
-- [ ] 2.3 Replace isolated blur-circle ambience with two broad nebula ribbons and lower-page partial orbital/horizon forms; verify the space composition remains intentional with JavaScript, canvas, or GSAP unavailable.
-- [x] 2.4 Integrate bounded full-tier planet, atmosphere, ring, and nebula parallax through the existing pointer/GSAP systems without adding another animation loop; verify constrained/static tiers remain still and native scroll behavior is unchanged.
+- [x] 2.1 Add decorative BEM-structured markup for celestial geometry (orbital rings, horizon forms, and depth layers), all excluded from the accessibility tree; verify the hero's semantic content and tab order are unchanged.
+- [x] 2.2 Implement the static celestial geometry in dark and light themes using layered gradients, masks, and depth shadows; verify it reads as a designed scene before individual stars while preserving hero and terminal contrast.
+- [x] 2.3 Retain partial orbital/horizon forms and lower-page depth without nebula ribbons; verify the space composition remains intentional with JavaScript, canvas, or GSAP unavailable.
+- [x] 2.4 Integrate bounded full-tier orbital/horizon parallax through the existing pointer/GSAP systems without adding another animation loop; verify constrained/static tiers remain still and native scroll behavior is unchanged.
 
 ## 3. Integrated Skills constellation
 
-- [x] 3.1 Restructure Skills into a semantic 12-column constellation dashboard with emphasized AI-Assisted Development and AWS & DevOps anchors, medium Frontend/Backend modules, and compact Data/Systems modules; verify document order remains logical and every category and technology is readable without CSS positioning.
+- [x] 3.1 Restructure Skills into a semantic aligned constellation grid with emphasized AI-Assisted Development and AWS & DevOps anchors; verify document order remains logical and every category and technology is readable without CSS positioning.
 - [ ] 3.2 Restyle skill modules with theme-aware translucent depth, spectral edges, category markers, internal light, and differentiated spans so they feel embedded in the dark cosmic environment; verify light mode uses a legible observatory-diagram treatment rather than dark-theme glows.
 - [x] 3.3 Replace the current generic connector layer with decorative geometry aligned to the revised module anchors and add full-tier node/path illumination; verify connections never contain required information, ignore pointer input, and stop animating under reduced motion.
 - [ ] 3.4 Add tablet two-column and mobile single-column Skills layouts, hiding connective geometry when it cannot align safely; verify no overlap, clipping, or horizontal page overflow at 320px and intermediate widths.

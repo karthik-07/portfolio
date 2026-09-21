@@ -6,8 +6,8 @@ The portfolio now has a strong cosmic foundation, but three high-visibility area
 
 ## What Changes
 
-- Introduce one unmistakable large-scale celestial composition—a luminous planetary horizon with atmospheric rim light, nebula ribbons, orbital arcs, and depth layers—so the background reads as a designed space scene rather than only stars.
-- Let the cosmic scene evolve down the page through restrained large-form nebula and orbital shapes while preserving the existing starfield as supporting texture.
+- Maintain one cohesive celestial composition—depth stars, orbital arcs, horizon forms, and layered parallax—so the background reads as a designed space scene rather than only dots, without oversized celestial bodies or broad colored washes.
+- Continue the space identity down the page through restrained orbital and horizon geometry plus section-local accents rather than nebula ribbons or colored fog.
 - Redesign Skills from a conventional equal-card grid into an integrated constellation system with varied hierarchy, translucent dark-theme surfaces, spectral edges, category markers, and visible connective geometry.
 - Give AWS & DevOps and AI-Assisted Development stronger visual emphasis without hiding or de-emphasizing the remaining recruiter-relevant skill groups.
 - Make availability a prominent hero beacon with explicit “Open to full-stack software engineering roles in Canada” language, a strong contact action, and a compact navigation-level status indicator.
@@ -22,7 +22,7 @@ None.
 
 ### Modified Capabilities
 
-- `portfolio-presentation`: Adds requirements for an unmistakable large-scale celestial environment, an integrated and hierarchically designed Skills presentation, and a prominent accessible availability signal.
+- `portfolio-presentation`: Adds requirements for a cohesive celestial environment, an integrated and hierarchically designed Skills presentation, and a prominent accessible availability signal, within the neutral-surface and no-broad-green atmosphere established by later recruiter-polish changes.
 
 ## Impact
 
